@@ -1,0 +1,48 @@
+extends Node
+
+# ============================================================================
+# GameManager.gd - Gère les transitions entre les scènes
+# ============================================================================
+# Ce script contrôle le flux du jeu:
+# Menu → Sélection Personnage → Sélection Deck → Lobby → Course → Résultats
+#
+# Utilisation:
+#   GameManager.go_to_character_select()
+#   GameManager.go_to_deck_select()
+#   etc.
+# ============================================================================
+
+signal scene_changed(scene_name: String)
+
+func _ready():
+	print("[GameManager] Initialisé")
+
+# ─── TRANSITIONS ───
+
+func go_to_main_menu() -> void:
+	_change_scene("res://scenes/menu/Main_Menu.tscn", "Menu Principal")
+
+func go_to_character_select() -> void:
+	_change_scene("res://scenes/menu/CharacterSelect.tscn", "Sélection Personnage")
+
+func go_to_deck_select() -> void:
+	_change_scene("res://scenes/menu/DeckSelect.tscn", "Sélection Deck")
+
+func go_to_matchmaking() -> void:
+	_change_scene("res://scenes/lobby/Matchmaking.tscn", "Matchmaking")
+
+func go_to_lobby() -> void:
+	_change_scene("res://scenes/lobby/Lobby.tscn", "Lobby")
+
+func go_to_race() -> void:
+	_change_scene("res://scenes/race/Race.tscn", "Course")
+
+func go_to_results() -> void:
+	_change_scene("res://scenes/race/Results.tscn", "Résultats")
+
+# ─── FONCTION INTERNE ───
+
+func _change_scene(path: String, name: String) -> void:
+	print("[GameManager] Changement vers: %s" % name)
+	scene_changed.emit(name)
+	get_tree().change_scene_to_file(path)

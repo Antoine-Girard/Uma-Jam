@@ -1,0 +1,66 @@
+[gd_scene format=3 uid="uid://1635337n7vc1"]
+
+[ext_resource type="Script" uid="uid://oi61vsrgj66b" path="res://scripts/Matchmaking.gd" id="1_jpr8p"]
+
+[node name="Matchmaking" type="Control" unique_id=900604299]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+script = ExtResource("1_jpr8p")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=923891842]
+layout_mode = 1
+offset_left = -150.0
+offset_top = -150.0
+offset_right = 150.0
+offset_bottom = 150.0
+
+[node name="Title" type="Label" parent="VBoxContainer" unique_id=938739371]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "🏇 MATCHMAKING 🏇"
+
+[node name="Separator1" type="Control" parent="VBoxContainer" unique_id=1115717700]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="CreateButton" type="Button" parent="VBoxContainer" unique_id=1706695004]
+custom_minimum_size = Vector2(300, 60)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "CRÉER UNE PARTIE"
+
+[node name="Separator2" type="Control" parent="VBoxContainer" unique_id=1501385995]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="JoinLabel" type="Label" parent="VBoxContainer" unique_id=1846632829]
+layout_mode = 2
+text = "IP du serveur:"
+
+[node name="IPInput" type="LineEdit" parent="VBoxContainer" unique_id=140506305]
+custom_minimum_size = Vector2(300, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+placeholder_text = "127.0.0.1"
+
+[node name="JoinButton" type="Button" parent="VBoxContainer" unique_id=890352942]
+custom_minimum_size = Vector2(300, 60)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "REJOINDRE"
+
+[node name="Separator3" type="Control" parent="VBoxContainer" unique_id=1043376983]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="VBoxContainer" unique_id=666439944]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "En attente..."

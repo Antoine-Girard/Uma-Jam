@@ -13,6 +13,13 @@ config_version=5
 config/name="Uma Jam"
 config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://icon.svg"
+run/main_scene="res://scenes/menu/Main_Menu.tscn"
+
+[autoload]
+
+GameData="*res://scripts/GameData.gd"
+NetworkManager="*res://scripts/NetworkManager.gd"
+GameManager="*res://scripts/GameManager.gd"
 
 [physics]
 
