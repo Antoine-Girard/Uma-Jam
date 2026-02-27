@@ -1,6 +1,8 @@
 [gd_scene format=3 uid="uid://d1ulvlrkbe22f"]
 
 [ext_resource type="Script" uid="uid://cuyttxjirjuar" path="res://scripts/Race.gd" id="1_0wq1t"]
+[ext_resource type="Script" uid="uid://qk8p6w2mbs7l" path="res://scripts/multiplayer_spawner.gd" id="2_20c28"]
+[ext_resource type="PackedScene" uid="uid://bio465hdb34kb" path="res://scenes/lobby/uma_player.tscn" id="3_uarok"]
 
 [node name="Race" type="Control" unique_id=2082584051]
 layout_mode = 3
@@ -23,3 +25,9 @@ theme_override_font_sizes/font_size = 32
 text = "🏁 RACE STARTED! 🏁"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="." unique_id=1372679162]
+_spawnable_scenes = PackedStringArray("uid://bio465hdb34kb")
+spawn_path = NodePath("..")
+script = ExtResource("2_20c28")
+network_player = ExtResource("3_uarok")
