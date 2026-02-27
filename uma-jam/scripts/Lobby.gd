@@ -12,7 +12,14 @@ func _ready():
 	NetworkManager.peer_connected.connect(_on_peer_connected)
 	NetworkManager.peer_disconnected.connect(_on_peer_disconnected)
 	ready_button.pressed.connect(_on_ready_pressed)
+	
+	$VBoxContainer/IPLabel.text = _get_local_ip()
 	_refresh_player_list()
+
+func _get_local_ip() -> String:
+	# TODO modify to a get in network manager
+	var ip_name = IP.resolve_hostname(str(OS.get_environment("COMPUTERNAME")),1)
+	return ip_name
 
 func _on_ready_pressed():
 	if not is_ready_pressed:

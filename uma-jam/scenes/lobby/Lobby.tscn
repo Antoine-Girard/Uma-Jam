@@ -51,3 +51,12 @@ custom_minimum_size = Vector2(400, 80)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "🎮 JE SUIS PRÊT! 🎮"
+
+[node name="Separator4" type="Control" parent="VBoxContainer" unique_id=631625861]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="IPLabel" type="Label" parent="VBoxContainer" unique_id=80248232]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "IP"
