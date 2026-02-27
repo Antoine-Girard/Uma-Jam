@@ -30,8 +30,9 @@ func _on_join_pressed():
 
 func _on_server_started() -> void:
 	print("[Matchmaking] Serveur lancé! En attente des clients...")
-	status_label.text = "Serveur lancé! Adresse IP: " + _get_local_ip()
-	
+	var ip = _get_local_ip()
+	status_label.text = "Serveur lancé! IP : %s (pour vos amis)" % ip
+	print("[Matchmaking] Utilisez cette IP pour vous connecter : %s" % ip)
 	await get_tree().create_timer(1.0).timeout
 	GameManager.go_to_lobby()
 
@@ -43,5 +44,8 @@ func _on_client_connected() -> void:
 	GameManager.go_to_lobby()
 
 func _get_local_ip() -> String:
-	var ip_name = IP.resolve_hostname(str(OS.get_environment("COMPUTERNAME")),1)
-	return ip_name
+	var ips = IP.get_local_addresses()
+	for ip in ips:
+		if !ip.begins_with("127."):
+			return ip
+	return "127.0.0.1"

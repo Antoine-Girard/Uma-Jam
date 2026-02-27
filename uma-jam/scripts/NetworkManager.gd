@@ -19,6 +19,8 @@ func _ready():
 	multiplayer.server_disconnected.connect(_on_server_disconnected)
 	multiplayer.peer_connected.connect(_on_peer_connected)
 	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
+	# signal called when a client fails to connect (timeout, unreachable)
+	multiplayer.connection_failed.connect(_on_connection_failed)
 
 func start_server() -> void:
 	print("[NetworkManager] Démarrage du serveur...")
@@ -107,6 +109,10 @@ func _on_client_connected() -> void:
 	GameData.player_id = multiplayer.get_unique_id()
 	rpc_id(1, "_notify_new_player", GameData.player_name)
 	client_connected.emit()
+
+func _on_connection_failed() -> void:
+	print("[NetworkManager] ✗ Échec de connexion au serveur")
+	# You can show a UI warning here if needed
 
 func _on_server_disconnected() -> void:
 	print("[NetworkManager] ✗ Déconnecté du serveur!")
