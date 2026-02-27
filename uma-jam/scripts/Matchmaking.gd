@@ -16,15 +16,15 @@ func _on_create_pressed():
 	GameManager.go_to_race()
 
 func _on_join_pressed():
-#	var ip = ip_input.text.strip_edges()
+	var ip = ip_input.text.strip_edges()
 
-#	if ip.is_empty():
-#		status_label.text = "Erreur: Rentre une IP!"
-#		return
+	if ip.is_empty():
+		status_label.text = "Erreur: Rentre une IP!"
+		return
 
-#	print("[Matchmaking] Tentative de connexion à %s" % ip)
-#	status_label.text = "Connexion à %s..." % ip
-	NetworkManager.start_client("127.0.0.1")
+	print("[Matchmaking] Tentative de connexion à %s" % ip)
+	status_label.text = "Connexion à %s..." % ip
+	NetworkManager.start_client(ip)
 	GameManager.go_to_race()
 
 func _on_server_started() -> void:
