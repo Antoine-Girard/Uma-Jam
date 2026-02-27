@@ -1,6 +1,6 @@
 extends CharacterBody2D
 
-const SPEED: float = 300.0
+var SPEED: float = 300.0
 
 func _enter_tree() -> void:
 	set_multiplayer_authority(name.to_int())
