@@ -1,22 +1,10 @@
 extends Control
 
-# ============================================================================
-# Race.gd - Scène de la course (à développer plus tard)
-# ============================================================================
-# Pour maintenant: juste un écran qui affiche "Course en cours!"
-# Plus tard tu y ajouteras:
-#   - Les chevaux qui bougent
-#   - La synchronisation multijoueur
-#   - Les skills activables
-#   - L'endurance
-# ============================================================================
-
 @onready var status_label = $StatusLabel
 
 func _ready():
 	print("[Race] Course chargée!")
 	
-	# Afficher les joueurs en course
 	var players = NetworkManager.players_connected
 	status_label.text = "🏁 COURSE EN COURS!\n\nJoueurs (%d):\n" % players.size()
 	

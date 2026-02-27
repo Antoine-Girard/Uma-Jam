@@ -1,17 +1,5 @@
 extends Node
 
-# ============================================================================
-# GameManager.gd - Gère les transitions entre les scènes
-# ============================================================================
-# Ce script contrôle le flux du jeu:
-# Menu → Sélection Personnage → Sélection Deck → Lobby → Course → Résultats
-#
-# Utilisation:
-#   GameManager.go_to_character_select()
-#   GameManager.go_to_deck_select()
-#   etc.
-# ============================================================================
-
 signal scene_changed(scene_name: String)
 
 func _ready():
