@@ -23,7 +23,7 @@ func _on_join_pressed():
 	if ip.is_empty():
 		status_label.text = "Erreur: Rentre une IP!"
 		return
-	
+
 	print("[Matchmaking] Tentative de connexion à %s" % ip)
 	status_label.text = "Connexion à %s..." % ip
 	NetworkManager.join_server(ip)
@@ -43,5 +43,5 @@ func _on_client_connected() -> void:
 	GameManager.go_to_lobby()
 
 func _get_local_ip() -> String:
-	# TODO: get l'IP
-	return "127.0.0.1"
+	var ip_name = IP.resolve_hostname(str(OS.get_environment("COMPUTERNAME")),1)
+	return ip_name
