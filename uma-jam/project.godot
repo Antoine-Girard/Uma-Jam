@@ -11,9 +11,9 @@ config_version=5
 [application]
 
 config/name="Uma Jam"
+run/main_scene="res://scenes/menu/Main_Menu.tscn"
 config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://icon.svg"
-run/main_scene="res://scenes/menu/Main_Menu.tscn"
 
 [autoload]
 

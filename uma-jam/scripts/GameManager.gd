@@ -28,6 +28,12 @@ func go_to_character_select() -> void:
 func go_to_deck_select() -> void:
 	_change_scene("res://scenes/menu/DeckSelect.tscn", "Sélection Deck")
 
+func go_to_build() -> void:
+	_change_scene("res://scenes/menu/Build.tscn", "Build")
+
+func go_to_profile() -> void:
+	_change_scene("res://scenes/menu/Profile.tscn", "Profil")
+
 func go_to_matchmaking() -> void:
 	_change_scene("res://scenes/lobby/Matchmaking.tscn", "Matchmaking")
 
