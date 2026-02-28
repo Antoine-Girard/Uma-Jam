@@ -2,6 +2,28 @@
 
 [ext_resource type="Script" uid="uid://da8cqvlta11xt" path="res://scripts/MainMenu.gd" id="1_abc12"]
 
+[sub_resource type="StyleBoxFlat" id="btn_matchmaking"]
+bg_color = Color(0.15, 0.4, 0.2, 0.9)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxFlat" id="btn_quit"]
+bg_color = Color(0.5, 0.15, 0.15, 0.85)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+content_margin_left = 12.0
+content_margin_top = 6.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
+
 [node name="MainMenu" type="Control" unique_id=1056994140]
 layout_mode = 3
 anchors_preset = 15
@@ -19,7 +41,7 @@ offset_top = 40.0
 offset_bottom = 120.0
 grow_horizontal = 2
 theme_override_font_sizes/font_size = 48
-text = "🏇 UMA RACING 🏇"
+text = "UMA RACING"
 horizontal_alignment = 1
 
 [node name="BottomBar" type="HBoxContainer" parent="." unique_id=1895386965]
@@ -55,12 +77,40 @@ size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 22
 text = "PROFILE"
 
-[node name="VBoxContainer#TestButton" type="Button" parent="." unique_id=149143589]
-custom_minimum_size = Vector2(300, 80)
-layout_mode = 0
-theme_override_font_sizes/font_size = 24
-text = "TEST (Solo + Bots)"
+[node name="TopRight" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -320.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 70.0
+grow_horizontal = 0
+alignment = 2
+theme_override_constants/separation = 12
 
-[node name="VBoxContainer#Separator2" type="Control" parent="." unique_id=146376773]
-custom_minimum_size = Vector2(0, 20)
-anchors_preset = 0
+[node name="MatchmakingBtn" type="Button" parent="TopRight"]
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("btn_matchmaking")
+theme_override_styles/hover = SubResource("btn_matchmaking")
+theme_override_styles/pressed = SubResource("btn_matchmaking")
+text = "MATCHMAKING"
+
+[node name="QuitBtn" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -56.0
+offset_right = 130.0
+offset_bottom = -16.0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("btn_quit")
+theme_override_styles/hover = SubResource("btn_quit")
+theme_override_styles/pressed = SubResource("btn_quit")
+text = "QUITTER"

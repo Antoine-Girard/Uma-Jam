@@ -2,65 +2,118 @@
 
 [ext_resource type="Script" uid="uid://oi61vsrgj66b" path="res://scripts/Matchmaking.gd" id="1_jpr8p"]
 
+[sub_resource type="StyleBoxFlat" id="panel_bg"]
+bg_color = Color(0.08, 0.08, 0.12, 0.9)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+content_margin_left = 30.0
+content_margin_top = 24.0
+content_margin_right = 30.0
+content_margin_bottom = 24.0
+
+[sub_resource type="StyleBoxFlat" id="btn_cancel"]
+bg_color = Color(0.5, 0.15, 0.15, 0.85)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+
 [node name="Matchmaking" type="Control" unique_id=900604299]
 layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_jpr8p")
+
+[node name="BG" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.05, 0.05, 0.08, 1)
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -250.0
+offset_right = 220.0
+offset_bottom = 250.0
 grow_horizontal = 2
 grow_vertical = 2
-size_flags_horizontal = 4
-script = ExtResource("1_jpr8p")
+theme_override_styles/panel = SubResource("panel_bg")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=923891842]
-layout_mode = 1
-offset_left = -150.0
-offset_top = -150.0
-offset_right = 150.0
-offset_bottom = 150.0
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
 
-[node name="Title" type="Label" parent="VBoxContainer" unique_id=938739371]
+[node name="Title" type="Label" parent="Panel/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
-text = "🏇 MATCHMAKING 🏇"
+theme_override_colors/font_color = Color(1, 0.85, 0.25, 1)
+text = "MATCHMAKING"
+horizontal_alignment = 1
 
-[node name="Separator1" type="Control" parent="VBoxContainer" unique_id=1115717700]
-custom_minimum_size = Vector2(0, 20)
+[node name="Sep1" type="Control" parent="Panel/VBox"]
+custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 
-[node name="CreateButton" type="Button" parent="VBoxContainer" unique_id=1706695004]
-custom_minimum_size = Vector2(300, 60)
-layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "CRÉER UNE PARTIE"
-
-[node name="Separator2" type="Control" parent="VBoxContainer" unique_id=1501385995]
-custom_minimum_size = Vector2(0, 20)
-layout_mode = 2
-
-[node name="JoinLabel" type="Label" parent="VBoxContainer" unique_id=1846632829]
-layout_mode = 2
-text = "IP du serveur:"
-
-[node name="IPInput" type="LineEdit" parent="VBoxContainer" unique_id=140506305]
-custom_minimum_size = Vector2(300, 40)
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-placeholder_text = "127.0.0.1"
-
-[node name="JoinButton" type="Button" parent="VBoxContainer" unique_id=890352942]
-custom_minimum_size = Vector2(300, 60)
-layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "REJOINDRE"
-
-[node name="Separator3" type="Control" parent="VBoxContainer" unique_id=1043376983]
-custom_minimum_size = Vector2(0, 20)
-layout_mode = 2
-
-[node name="StatusLabel" type="Label" parent="VBoxContainer" unique_id=666439944]
+[node name="StatusLabel" type="Label" parent="Panel/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "En attente..."
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+text = "Connexion au serveur..."
+horizontal_alignment = 1
+
+[node name="Sep2" type="Control" parent="Panel/VBox"]
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+
+[node name="PlayerList" type="VBoxContainer" parent="Panel/VBox"]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Sep3" type="Control" parent="Panel/VBox"]
+custom_minimum_size = Vector2(0, 4)
+layout_mode = 2
+
+[node name="CountLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+horizontal_alignment = 1
+
+[node name="TimerLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
+horizontal_alignment = 1
+
+[node name="Sep4" type="Control" parent="Panel/VBox"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+
+[node name="CancelBtn" type="Button" parent="Panel/VBox"]
+custom_minimum_size = Vector2(200, 50)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(1, 0.8, 0.8, 1)
+theme_override_styles/normal = SubResource("btn_cancel")
+theme_override_styles/hover = SubResource("btn_cancel")
+theme_override_styles/pressed = SubResource("btn_cancel")
+text = "ANNULER"

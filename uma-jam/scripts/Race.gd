@@ -4,6 +4,7 @@ const LAPS := 3
 const SKIP_SPEED_MULT := 12.0
 const BASE_MAX_SPEED := 55.0
 const BASE_ACCEL := 5.5
+const MAX_PLAYERS := 6
 
 const BOT_CHAR_IDS := ["tachyon", "el_condor_passa", "gold_ship", "maruzenski",
 	"oguri_cap", "sakura", "spe_chan", "rudolf"]
@@ -42,6 +43,9 @@ var _endurance_bar: ProgressBar       = null
 var _endurance_label: Label           = null
 var _skill_panel: PanelContainer      = null
 
+# Multiplayer mapping: player_id (String) -> HorseRacer
+var _player_horses: Dictionary        = {}
+
 
 func _ready() -> void:
 	_inner_btn.pressed.connect(_on_inner)
@@ -56,6 +60,11 @@ func _ready() -> void:
 	# Cacher les panels pendant l'intro
 	$UI/LapPanel.modulate.a = 0.0
 	$UI/PosPanel.modulate.a = 0.0
+	# Connecter les signaux multijoueur si online
+	if NetworkManager.is_online:
+		NetworkManager.lane_change_received.connect(_on_remote_lane_change)
+		NetworkManager.player_left.connect(_on_remote_player_left)
+
 	_spawn_horses()
 	_freeze_horses()
 	_build_skill_ui()
@@ -262,22 +271,35 @@ func _unfreeze_horses() -> void:
 # ─── Spawn ────────────────────────────────────────────────────────────────────
 
 func _spawn_horses() -> void:
-	var players: Dictionary = NetworkManager.players_connected
-	var my_id: int = multiplayer.get_unique_id()
 	var player_char_id: String = GameData.character_id
-	var i := 0
 
-	for peer_id in players.keys():
-		var pname: String = players[peer_id].get("name", "P%d" % (i + 1))
-		var is_me: bool = (peer_id == my_id)
-		var cid: String = player_char_id if is_me else BOT_CHAR_IDS[i % BOT_CHAR_IDS.size()]
-		var horse := _make_horse(i, pname, cid, is_me)
-		if is_me:
-			_my_horse = horse
-		i += 1
+	# Seed déterministe pour que tous les clients aient les mêmes vitesses de bots
+	if NetworkManager.race_seed != 0:
+		seed(NetworkManager.race_seed)
 
-	# Mode solo / test
-	if _horses.is_empty():
+	if NetworkManager.is_online and not NetworkManager.players_connected.is_empty():
+		# Mode online : spawn les vrais joueurs
+		var players: Dictionary = NetworkManager.players_connected
+		var i := 0
+		for pid in players.keys():
+			var pname: String = players[pid].get("name", "P%d" % (i + 1))
+			var is_me: bool = (pid == NetworkManager.my_player_id)
+			var cid: String = player_char_id if is_me else BOT_CHAR_IDS[i % BOT_CHAR_IDS.size()]
+			var horse := _make_horse(i, pname, cid, is_me)
+			_player_horses[pid] = horse
+			if is_me:
+				_my_horse = horse
+			i += 1
+
+		# Remplir avec des bots jusqu'à 6
+		var bot_names := ["Sakura", "Hana", "Kaze", "Tsuki", "Hoshi"]
+		var bot_idx := 0
+		while _horses.size() < MAX_PLAYERS:
+			var bot_cid: String = BOT_CHAR_IDS[(i + bot_idx) % BOT_CHAR_IDS.size()]
+			_make_horse(_horses.size(), bot_names[bot_idx % bot_names.size()], bot_cid, false)
+			bot_idx += 1
+	else:
+		# Mode solo / test
 		if player_char_id == "":
 			player_char_id = "tachyon"
 		_my_horse = _make_horse(0, "Joueur", player_char_id, true)
@@ -319,10 +341,14 @@ func _init_skill_manager(sm: SkillManager, horse: HorseRacer, char_id: String, i
 func _on_inner() -> void:
 	if _my_horse and not _my_finished and _race_started:
 		_my_horse.move_inner()
+		if NetworkManager.is_online:
+			NetworkManager.send_lane_change("inner")
 
 func _on_outer() -> void:
 	if _my_horse and not _my_finished and _race_started:
 		_my_horse.move_outer()
+		if NetworkManager.is_online:
+			NetworkManager.send_lane_change("outer")
 
 func _on_skip() -> void:
 	if _skipping:
@@ -339,19 +365,50 @@ func _on_skip() -> void:
 			h.max_speed *= SKIP_SPEED_MULT
 			h.acceleration *= SKIP_SPEED_MULT
 
+func _exit_tree() -> void:
+	if NetworkManager.lane_change_received.is_connected(_on_remote_lane_change):
+		NetworkManager.lane_change_received.disconnect(_on_remote_lane_change)
+	if NetworkManager.player_left.is_connected(_on_remote_player_left):
+		NetworkManager.player_left.disconnect(_on_remote_player_left)
+
 func _on_retry() -> void:
 	GameManager.go_to_race()
 
 func _on_menu() -> void:
+	if NetworkManager.is_online:
+		NetworkManager.disconnect_from_relay()
 	GameManager.go_to_main_menu()
+
+
+# ─── Réseau : réception ─────────────────────────────────────────────────────
+
+func _on_remote_lane_change(player_id: String, direction: String) -> void:
+	if player_id in _player_horses:
+		var horse: HorseRacer = _player_horses[player_id]
+		if direction == "inner":
+			horse.move_inner()
+		elif direction == "outer":
+			horse.move_outer()
+
+
+func _on_remote_player_left(player_id: String) -> void:
+	if player_id in _player_horses:
+		# Le cheval continue tout seul (comme un bot)
+		print("[Race] Joueur %s déconnecté, son cheval continue en bot" % player_id)
+		_player_horses.erase(player_id)
+
 
 func _input(event: InputEvent) -> void:
 	if _my_horse == null or _my_finished or not _race_started:
 		return
 	if event.is_action_pressed("ui_left"):
 		_my_horse.move_inner()
+		if NetworkManager.is_online:
+			NetworkManager.send_lane_change("inner")
 	if event.is_action_pressed("ui_right"):
 		_my_horse.move_outer()
+		if NetworkManager.is_online:
+			NetworkManager.send_lane_change("outer")
 
 
 # ─── Boucle principale ───────────────────────────────────────────────────────

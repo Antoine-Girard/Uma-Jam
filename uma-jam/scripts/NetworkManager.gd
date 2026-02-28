@@ -1,146 +1,193 @@
 extends Node
 
-const PORT = 8080
-const MAX_PLAYERS = 6
-const PASSWORD = "funny_uma"
+## URL du serveur relay — à changer après déploiement sur Render
+const RELAY_URL := "ws://localhost:8080"
+const MAX_PLAYERS := 6
 
-var is_server: bool = false
-var players_connected: Dictionary = {}
+# ─── État ─────────────────────────────────────────────────────────────────────
 
-signal peer_connected(id: int, name: String)
-signal peer_disconnected(id: int)
-signal server_started
-signal client_connected
-signal player_list_updated(players: Dictionary)
+enum State { DISCONNECTED, CONNECTING, IN_LOBBY, IN_RACE }
+var state: State = State.DISCONNECTED
 
-func _ready():
+var solo_mode: bool = false
+var is_online: bool = false
+var my_player_id: String = ""
+var race_seed: int = 0
+var players_connected: Dictionary = {}  # player_id -> { "name", "slot" }
+
+var _ws: WebSocketPeer = null
+var _was_open: bool = false
+
+# ─── Signaux ──────────────────────────────────────────────────────────────────
+
+signal connected_to_relay
+signal connection_failed
+signal lobby_updated(players: Array, time_remaining: int)
+signal race_starting(seed_val: int, players: Array)
+signal lane_change_received(player_id: String, direction: String)
+signal player_left(player_id: String)
+
+# ─── Lifecycle ────────────────────────────────────────────────────────────────
+
+func _ready() -> void:
 	print("[NetworkManager] Initialisé")
-	multiplayer.connected_to_server.connect(_on_client_connected)
-	multiplayer.server_disconnected.connect(_on_server_disconnected)
-	multiplayer.peer_connected.connect(_on_peer_connected)
-	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
-	# signal called when a client fails to connect (timeout, unreachable)
-	multiplayer.connection_failed.connect(_on_connection_failed)
 
-func start_server() -> void:
-	print("[NetworkManager] Démarrage du serveur...")
-	var peer = ENetMultiplayerPeer.new()
-	var error = peer.create_server(PORT, MAX_PLAYERS - 1)
-	if error != OK:
-		print("[NetworkManager] ERREUR: Impossible de créer le serveur")
+
+func _process(_delta: float) -> void:
+	if _ws == null:
 		return
-	multiplayer.multiplayer_peer = peer
-	is_server = true
-	GameData.player_id = multiplayer.get_unique_id()
-	players_connected[GameData.player_id] = {
-		"name": GameData.player_name,
-		"ready": false
-	}
-	print("[NetworkManager] ✓ Serveur lancé sur le port %d (ID: %d)" % [PORT, GameData.player_id])
-	print("[NetworkManager] En attente de %d joueurs..." % (MAX_PLAYERS - 1))
-	server_started.emit()
 
-func join_server(ip: String) -> void:
-	print("[NetworkManager] Tentative de connexion à %s:%d..." % [ip, PORT])
-	var peer = ENetMultiplayerPeer.new()
-	var error = peer.create_client(ip, PORT)
-	if error != OK:
-		print("[NetworkManager] ERREUR: Impossible de créer le client")
+	_ws.poll()
+
+	var ws_state := _ws.get_ready_state()
+
+	if ws_state == WebSocketPeer.STATE_OPEN and not _was_open:
+		_was_open = true
+		is_online = true
+		state = State.IN_LOBBY
+		print("[NetworkManager] Connecté au relay!")
+		connected_to_relay.emit()
+
+	elif ws_state == WebSocketPeer.STATE_CLOSED:
+		var code := _ws.get_close_code()
+		print("[NetworkManager] Déconnecté du relay (code %d)" % code)
+		var was_connecting := (state == State.CONNECTING)
+		_ws = null
+		_was_open = false
+		is_online = false
+		state = State.DISCONNECTED
+		if was_connecting:
+			connection_failed.emit()
 		return
-	multiplayer.multiplayer_peer = peer
-	is_server = false
-	print("[NetworkManager] ⏳ Connexion en cours...")
 
-func add_player(peer_id: int, name: String) -> void:
-	if peer_id not in players_connected:
-		players_connected[peer_id] = {"name": name, "ready": false}
-		print("[NetworkManager] ✓ Joueur ajouté: %s (ID: %d)" % [name, peer_id])
-		if is_server:
-			rpc("sync_player_list", players_connected)
+	# Lire les messages entrants
+	while _ws != null and _ws.get_available_packet_count() > 0:
+		var raw := _ws.get_packet().get_string_from_utf8()
+		var parsed = JSON.parse_string(raw)
+		if parsed is Dictionary:
+			_handle_message(parsed)
 
-@rpc("authority", "call_local")
-func sync_player_list(players: Dictionary) -> void:
-	players_connected = players
-	print("[NetworkManager] Liste des joueurs synchronisée: %d joueur(s)" % players_connected.size())
-	player_list_updated.emit(players_connected)
 
-func player_ready() -> void:
-	rpc_id(1, "_player_confirmed_ready", multiplayer.get_unique_id())
+# ─── Connexion ────────────────────────────────────────────────────────────────
 
-@rpc("any_peer", "call_remote")
-func _player_confirmed_ready(peer_id: int) -> void:
-	if not is_server:
+func connect_to_relay() -> void:
+	if _ws != null:
+		disconnect_from_relay()
+
+	print("[NetworkManager] Connexion à %s..." % RELAY_URL)
+	_ws = WebSocketPeer.new()
+	var err := _ws.connect_to_url(RELAY_URL)
+	if err != OK:
+		print("[NetworkManager] Erreur de connexion: %d" % err)
+		_ws = null
+		connection_failed.emit()
 		return
-	if peer_id in players_connected:
-		players_connected[peer_id]["ready"] = true
-		print("[NetworkManager] Joueur %d est prêt" % peer_id)
-		rpc("sync_player_list", players_connected)
-		if all_players_ready():
-			print("[NetworkManager] 🎬 TOUS LES JOUEURS SONT PRÊTS → Lancement course!")
-			rpc("start_race")
+	state = State.CONNECTING
+	_was_open = false
 
-func player_unready() -> void:
-	rpc_id(1, "_player_confirmed_unready", multiplayer.get_unique_id())
 
-@rpc("any_peer", "call_remote")
-func _player_confirmed_unready(peer_id: int) -> void:
-	if not is_server:
-		return
-	if peer_id in players_connected:
-		players_connected[peer_id]["ready"] = false
-		print("[NetworkManager] Joueur %d n'est plus prêt" % peer_id)
-		rpc("sync_player_list", players_connected)
-
-func all_players_ready() -> bool:
-	if players_connected.size() < 2:
-		return false
-	for player_info in players_connected.values():
-		if not player_info.get("ready", false):
-			return false
-	return true
-
-@rpc("authority", "call_local")
-func start_race() -> void:
-	print("[NetworkManager] 🏁 Course lancée!")
-	get_tree().change_scene_to_file("res://scenes/race/Race.tscn")
-
-func _on_client_connected() -> void:
-	print("[NetworkManager] ✓ Connecté au serveur!")
-	GameData.player_id = multiplayer.get_unique_id()
-	rpc_id(1, "_notify_new_player", GameData.player_name)
-	client_connected.emit()
-
-func _on_connection_failed() -> void:
-	print("[NetworkManager] ✗ Échec de connexion au serveur")
-	# You can show a UI warning here if needed
-
-func _on_server_disconnected() -> void:
-	print("[NetworkManager] ✗ Déconnecté du serveur!")
-	is_server = false
+func disconnect_from_relay() -> void:
+	if _ws != null:
+		_send({"type": "leave"})
+		_ws.close()
+		_ws = null
+	_was_open = false
+	is_online = false
+	state = State.DISCONNECTED
+	my_player_id = ""
 	players_connected.clear()
 
-func _on_peer_connected(peer_id: int) -> void:
-	print("[NetworkManager] Quelqu'un a tenté de rejoindre: ID %d" % peer_id)
 
-func _on_peer_disconnected(peer_id: int) -> void:
-	print("[NetworkManager] Joueur déconnecté: %d" % peer_id)
-	if peer_id in players_connected:
-		players_connected.erase(peer_id)
-		rpc("sync_player_list", players_connected)
+## Ping HTTP pour réveiller le serveur Render (appelé depuis MainMenu)
+func wake_up_server() -> void:
+	var http := HTTPRequest.new()
+	add_child(http)
+	var url := RELAY_URL.replace("ws://", "http://").replace("wss://", "https://")
+	http.request(url)
+	http.request_completed.connect(func(_result, _code, _headers, _body):
+		print("[NetworkManager] Serveur pingé (wake-up)")
+		http.queue_free()
+	)
 
-@rpc("any_peer")
-func _notify_new_player(player_name: String) -> void:
-	var peer_id = multiplayer.get_remote_sender_id()
-	add_player(peer_id, player_name)
-	peer_connected.emit(peer_id, player_name)
 
-func get_player_name(peer_id: int) -> String:
-	if peer_id in players_connected:
-		return players_connected[peer_id]["name"]
-	return "Inconnu"
+# ─── Envoi de messages ────────────────────────────────────────────────────────
+
+func find_match() -> void:
+	_send({"type": "find_match", "player_name": GameData.player_name})
+
+
+func send_lane_change(direction: String) -> void:
+	_send({"type": "lane_change", "direction": direction})
+
+
+func send_skill_use(skill_id: String) -> void:
+	_send({"type": "skill_use", "skill_id": skill_id})
+
+
+func _send(data: Dictionary) -> void:
+	if _ws != null and _ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
+		_ws.send_text(JSON.stringify(data))
+
+
+# ─── Réception de messages ────────────────────────────────────────────────────
+
+func _handle_message(data: Dictionary) -> void:
+	var msg_type: String = data.get("type", "")
+
+	match msg_type:
+		"joined":
+			my_player_id = str(data.get("player_id", ""))
+			print("[NetworkManager] Rejoint la room %s (ID: %s)" % [
+				str(data.get("room_id", "")), my_player_id])
+
+		"lobby_update":
+			var players_arr: Array = data.get("players", [])
+			var time_remaining: int = int(data.get("time_remaining", 0))
+
+			players_connected.clear()
+			for p in players_arr:
+				var pid: String = str(p.get("id", ""))
+				players_connected[pid] = {
+					"name": str(p.get("name", "?")),
+					"slot": int(p.get("slot", 0))
+				}
+
+			lobby_updated.emit(players_arr, time_remaining)
+
+		"race_start":
+			race_seed = int(data.get("seed", 0))
+			var players_arr: Array = data.get("players", [])
+
+			players_connected.clear()
+			for p in players_arr:
+				var pid: String = str(p.get("id", ""))
+				players_connected[pid] = {
+					"name": str(p.get("name", "?")),
+					"slot": int(p.get("slot", 0))
+				}
+
+			state = State.IN_RACE
+			print("[NetworkManager] Course lancée! seed=%d, %d joueurs" % [
+				race_seed, players_arr.size()])
+			race_starting.emit(race_seed, players_arr)
+
+		"lane_change":
+			var pid: String = str(data.get("player_id", ""))
+			var direction: String = str(data.get("direction", ""))
+			lane_change_received.emit(pid, direction)
+
+		"player_left":
+			var pid: String = str(data.get("player_id", ""))
+			if pid in players_connected:
+				players_connected.erase(pid)
+			print("[NetworkManager] Joueur %s a quitté" % pid)
+			player_left.emit(pid)
+
+		"error":
+			print("[NetworkManager] Erreur serveur: %s" % str(data.get("message", "")))
+
+
+# ─── Helpers ──────────────────────────────────────────────────────────────────
 
 func get_player_count() -> int:
 	return players_connected.size()
-
-func am_server() -> bool:
-	return is_server
