@@ -14,10 +14,13 @@ const HORSE_COLORS := [
 var track: Node2D      = null
 var lane_idx: int      = 0       # couloir 0-5 (0 = intérieur)
 var progress: float    = 0.0     # fraction d'un tour, 0-1, sens horaire
-var speed: float       = 0.040   # tours par seconde (~25 s par tour)
+var current_speed: float = 0.0   # vitesse actuelle en distance/s (px/s)
+var max_speed: float   = 55.0    # vitesse maximale en distance/s (px/s)
+var acceleration: float = 5.5    # accel en distance/s² (px/s²)
 var laps_completed: int = 0
 var horse_name: String = "?"
 var color_idx: int     = 0
+var skill_manager: SkillManager = null
 
 var _label: Label
 
@@ -36,7 +39,24 @@ func _process(delta: float) -> void:
 	if track == null:
 		return
 
-	progress += speed * delta
+	var effective_max := max_speed
+	var effective_accel := acceleration
+	if skill_manager != null:
+		var speed_bonus: float = skill_manager.get_speed_bonus()
+		var accel_bonus: float = skill_manager.get_accel_bonus()
+		effective_max = max_speed + (speed_bonus / SkillData.BASE_SPEED) * max_speed
+		effective_accel = acceleration + (accel_bonus / SkillData.BASE_ACCEL) * acceleration
+
+	if current_speed <= effective_max:
+		current_speed += effective_accel * delta
+		if current_speed > effective_max:
+			current_speed = effective_max
+	else:
+		current_speed = move_toward(current_speed, effective_max, effective_accel * delta)
+
+	var lane_length: float = track.get_lane_length(lane_idx)
+	var progress_delta: float = (current_speed * delta) / lane_length
+	progress += progress_delta
 	while progress >= 1.0:
 		progress -= 1.0
 		laps_completed += 1

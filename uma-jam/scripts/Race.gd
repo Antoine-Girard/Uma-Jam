@@ -2,8 +2,11 @@ extends Node2D
 
 const LAPS := 3
 const SKIP_SPEED_MULT := 12.0
-const SPEED_MIN := 0.039
-const SPEED_MAX := 0.043
+const BASE_MAX_SPEED := 55.0
+const BASE_ACCEL := 5.5
+
+const BOT_CHAR_IDS := ["tachyon", "el_condor_passa", "gold_ship", "maruzenski",
+	"oguri_cap", "sakura", "spe_chan", "rudolf"]
 
 @onready var _track:        Node2D  = $Track
 @onready var _horses_node:  Node2D  = $Horses
@@ -34,6 +37,11 @@ var _race_started: bool               = false
 var _my_finished:  bool               = false
 var _skipping:     bool               = false
 
+var _skill_buttons: Array[Button]     = []
+var _endurance_bar: ProgressBar       = null
+var _endurance_label: Label           = null
+var _skill_panel: PanelContainer      = null
+
 
 func _ready() -> void:
 	_inner_btn.pressed.connect(_on_inner)
@@ -50,6 +58,7 @@ func _ready() -> void:
 	$UI/PosPanel.modulate.a = 0.0
 	_spawn_horses()
 	_freeze_horses()
+	_build_skill_ui()
 	_show_intro()
 
 
@@ -234,6 +243,8 @@ func _start_countdown() -> void:
 	_race_started = true
 	_lane_btns.visible = true
 	_skip_btn.visible = true
+	if _skill_panel:
+		_skill_panel.visible = true
 	var fade := create_tween()
 	fade.tween_property(_skip_btn, "modulate:a", 1.0, 0.5).set_delay(1.0)
 	_unfreeze_horses()
@@ -253,34 +264,54 @@ func _unfreeze_horses() -> void:
 func _spawn_horses() -> void:
 	var players: Dictionary = NetworkManager.players_connected
 	var my_id: int = multiplayer.get_unique_id()
+	var player_char_id: String = GameData.character_id
 	var i := 0
 
 	for peer_id in players.keys():
 		var pname: String = players[peer_id].get("name", "P%d" % (i + 1))
-		var horse := _make_horse(i, pname)
-		if peer_id == my_id:
+		var is_me: bool = (peer_id == my_id)
+		var cid: String = player_char_id if is_me else BOT_CHAR_IDS[i % BOT_CHAR_IDS.size()]
+		var horse := _make_horse(i, pname, cid, is_me)
+		if is_me:
 			_my_horse = horse
 		i += 1
 
 	# Mode solo / test
 	if _horses.is_empty():
-		_my_horse = _make_horse(0, "Joueur")
+		if player_char_id == "":
+			player_char_id = "tachyon"
+		_my_horse = _make_horse(0, "Joueur", player_char_id, true)
 		var bot_names := ["Sakura", "Hana", "Kaze", "Tsuki", "Hoshi"]
 		for b in range(5):
-			_make_horse(b + 1, bot_names[b])
+			var bot_cid: String = BOT_CHAR_IDS[(b + 1) % BOT_CHAR_IDS.size()]
+			_make_horse(b + 1, bot_names[b], bot_cid, false)
 
 
-func _make_horse(lane: int, pname: String) -> HorseRacer:
+func _make_horse(lane: int, pname: String, char_id: String = "", is_local: bool = false) -> HorseRacer:
 	var horse := HorseRacer.new()
-	horse.track      = _track
-	horse.lane_idx   = lane
-	horse.color_idx  = lane
-	horse.horse_name = pname
-	horse.progress   = 0.0
-	horse.speed      = randf_range(SPEED_MIN, SPEED_MAX)
+	horse.track        = _track
+	horse.lane_idx     = lane
+	horse.color_idx    = lane
+	horse.horse_name   = pname
+	horse.progress     = 0.0
+	horse.current_speed = 0.0
+	horse.max_speed    = BASE_MAX_SPEED
+	horse.acceleration = BASE_ACCEL
 	_horses_node.add_child(horse)
 	_horses.append(horse)
+
+	var sm := SkillManager.new()
+	sm.name = "SkillManager"
+	horse.add_child(sm)
+	horse.skill_manager = sm
+
+	call_deferred("_init_skill_manager", sm, horse, char_id, is_local)
+
 	return horse
+
+
+func _init_skill_manager(sm: SkillManager, horse: HorseRacer, char_id: String, is_local: bool) -> void:
+	sm.init(horse, self, _horses, char_id, is_local)
 
 
 # ─── Controles ────────────────────────────────────────────────────────────────
@@ -298,12 +329,15 @@ func _on_skip() -> void:
 		return
 	_skipping = true
 	_lane_btns.visible = false
+	if _skill_panel:
+		_skill_panel.visible = false
 	_skip_btn.text = "ACCELERATION..."
 	_skip_btn.disabled = true
 	for h: HorseRacer in _horses:
 		if not _finish_order.has(h):
 			h.set_process(true)
-			h.speed *= SKIP_SPEED_MULT
+			h.max_speed *= SKIP_SPEED_MULT
+			h.acceleration *= SKIP_SPEED_MULT
 
 func _on_retry() -> void:
 	GameManager.go_to_race()
@@ -322,11 +356,15 @@ func _input(event: InputEvent) -> void:
 
 # ─── Boucle principale ───────────────────────────────────────────────────────
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if not _race_started or _race_over:
 		return
+	for h: HorseRacer in _horses:
+		if h.skill_manager != null:
+			h.skill_manager.update(delta)
 	_check_finishers()
 	_update_ui()
+	_update_endurance_ui()
 
 
 func _check_finishers() -> void:
@@ -341,6 +379,8 @@ func _check_finishers() -> void:
 			if h == _my_horse and not _my_finished:
 				_my_finished = true
 				_lane_btns.visible = false
+				if _skill_panel:
+					_skill_panel.visible = false
 
 	if _finish_order.size() >= _horses.size():
 		_race_over = true
@@ -403,6 +443,171 @@ func get_horse_rank(horse: HorseRacer) -> int:
 ## Called by SkillManager._get_race_phase() for phase calculation.
 func get_total_laps() -> int:
 	return LAPS
+
+
+# ─── Skill UI ─────────────────────────────────────────────────────────────────
+
+func _build_skill_ui() -> void:
+	var skill_ids: Array = GameData.get_skill_ids()
+	if skill_ids.is_empty():
+		skill_ids = ["speed_boost", "accel_boost", "endurance_recovery"]
+
+	_skill_panel = PanelContainer.new()
+	_skill_panel.name = "SkillPanel"
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.05, 0.05, 0.12, 0.75)
+	panel_style.set_corner_radius_all(10)
+	panel_style.content_margin_left = 10.0
+	panel_style.content_margin_right = 10.0
+	panel_style.content_margin_top = 6.0
+	panel_style.content_margin_bottom = 6.0
+	_skill_panel.add_theme_stylebox_override("panel", panel_style)
+
+	_skill_panel.anchor_left = 0.0
+	_skill_panel.anchor_right = 1.0
+	_skill_panel.anchor_top = 1.0
+	_skill_panel.anchor_bottom = 1.0
+	_skill_panel.offset_top = -130.0
+	_skill_panel.offset_bottom = -10.0
+	_skill_panel.offset_left = 10.0
+	_skill_panel.offset_right = -10.0
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 4)
+	_skill_panel.add_child(vbox)
+
+	var endurance_hbox := HBoxContainer.new()
+	endurance_hbox.add_theme_constant_override("separation", 8)
+	vbox.add_child(endurance_hbox)
+
+	var end_label := Label.new()
+	end_label.text = "ENDURANCE"
+	end_label.add_theme_font_size_override("font_size", 12)
+	end_label.add_theme_color_override("font_color", Color(0.7, 0.85, 1.0))
+	endurance_hbox.add_child(end_label)
+
+	_endurance_bar = ProgressBar.new()
+	_endurance_bar.min_value = 0.0
+	_endurance_bar.max_value = SkillData.MAX_ENDURANCE
+	_endurance_bar.value = SkillData.MAX_ENDURANCE
+	_endurance_bar.custom_minimum_size = Vector2(0, 18)
+	_endurance_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_endurance_bar.show_percentage = false
+
+	var bar_bg := StyleBoxFlat.new()
+	bar_bg.bg_color = Color(0.1, 0.1, 0.15, 1.0)
+	bar_bg.set_corner_radius_all(4)
+	_endurance_bar.add_theme_stylebox_override("background", bar_bg)
+
+	var bar_fill := StyleBoxFlat.new()
+	bar_fill.bg_color = Color(0.2, 0.6, 1.0, 1.0)
+	bar_fill.set_corner_radius_all(4)
+	_endurance_bar.add_theme_stylebox_override("fill", bar_fill)
+
+	endurance_hbox.add_child(_endurance_bar)
+
+	_endurance_label = Label.new()
+	_endurance_label.text = "10 / 10"
+	_endurance_label.add_theme_font_size_override("font_size", 12)
+	_endurance_label.add_theme_color_override("font_color", Color.WHITE)
+	_endurance_label.custom_minimum_size = Vector2(55, 0)
+	endurance_hbox.add_child(_endurance_label)
+
+	var btn_hbox := HBoxContainer.new()
+	btn_hbox.add_theme_constant_override("separation", 8)
+	btn_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_child(btn_hbox)
+
+	_skill_buttons = []
+	for skill_id in skill_ids:
+		if not SkillData.ACTIVE_SKILLS.has(skill_id):
+			continue
+		var def: Dictionary = SkillData.ACTIVE_SKILLS[skill_id]
+		var btn := Button.new()
+		btn.text = def["label"]
+		btn.custom_minimum_size = Vector2(120, 40)
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+		var btn_style := StyleBoxFlat.new()
+		btn_style.bg_color = Color(0.15, 0.25, 0.5, 0.9)
+		btn_style.set_corner_radius_all(8)
+		btn_style.border_color = Color(0.4, 0.6, 1.0, 0.6)
+		btn_style.set_border_width_all(1)
+		btn.add_theme_stylebox_override("normal", btn_style)
+
+		var btn_hover := StyleBoxFlat.new()
+		btn_hover.bg_color = Color(0.2, 0.35, 0.65, 0.95)
+		btn_hover.set_corner_radius_all(8)
+		btn_hover.border_color = Color(0.5, 0.7, 1.0, 0.8)
+		btn_hover.set_border_width_all(1)
+		btn.add_theme_stylebox_override("hover", btn_hover)
+
+		var btn_pressed := StyleBoxFlat.new()
+		btn_pressed.bg_color = Color(0.1, 0.15, 0.35, 0.9)
+		btn_pressed.set_corner_radius_all(8)
+		btn.add_theme_stylebox_override("pressed", btn_pressed)
+
+		var btn_disabled := StyleBoxFlat.new()
+		btn_disabled.bg_color = Color(0.12, 0.12, 0.18, 0.6)
+		btn_disabled.set_corner_radius_all(8)
+		btn.add_theme_stylebox_override("disabled", btn_disabled)
+
+		btn.add_theme_font_size_override("font_size", 13)
+
+		var cost_str := "  (-%d end)" % int(def["endurance_cost"])
+		btn.tooltip_text = "%s%s\n%s" % [def["label"], cost_str,
+			"Condition: " + def["condition"] if def["condition"] != "" else "Pas de condition"]
+
+		btn.pressed.connect(_on_skill_button.bind(skill_id))
+		btn_hbox.add_child(btn)
+		_skill_buttons.append(btn)
+
+	_ui.add_child(_skill_panel)
+	_skill_panel.visible = false
+
+
+func _on_skill_button(skill_id: String) -> void:
+	if _my_horse == null or _my_finished or not _race_started:
+		return
+	if _my_horse.skill_manager == null:
+		return
+	var ok: bool = _my_horse.skill_manager.activate_skill(skill_id)
+	if ok:
+		print("[Race] Skill '%s' activé !" % skill_id)
+
+
+func _update_endurance_ui() -> void:
+	if _my_horse == null or _my_horse.skill_manager == null:
+		return
+	var sm: SkillManager = _my_horse.skill_manager
+	var end_val: float = sm.get_endurance()
+	if _endurance_bar:
+		_endurance_bar.value = end_val
+		var ratio := end_val / SkillData.MAX_ENDURANCE
+		var fill_style := StyleBoxFlat.new()
+		fill_style.set_corner_radius_all(4)
+		if ratio > 0.5:
+			fill_style.bg_color = Color(0.2, 0.6, 1.0, 1.0)
+		elif ratio > 0.25:
+			fill_style.bg_color = Color(1.0, 0.7, 0.2, 1.0)
+		else:
+			fill_style.bg_color = Color(1.0, 0.25, 0.2, 1.0)
+		_endurance_bar.add_theme_stylebox_override("fill", fill_style)
+	if _endurance_label:
+		_endurance_label.text = "%.0f / %.0f" % [end_val, SkillData.MAX_ENDURANCE]
+
+	for i in _skill_buttons.size():
+		var btn: Button = _skill_buttons[i]
+		var skill_ids: Array = GameData.get_skill_ids()
+		if skill_ids.is_empty():
+			skill_ids = ["speed_boost", "accel_boost", "endurance_recovery"]
+		if i < skill_ids.size():
+			var sid: String = skill_ids[i]
+			if SkillData.ACTIVE_SKILLS.has(sid):
+				var cost: float = SkillData.ACTIVE_SKILLS[sid]["endurance_cost"]
+				if sm.character_id == "maruzenski":
+					cost += 1.0
+				btn.disabled = end_val < cost
 
 
 # ─── Fin de course ───────────────────────────────────────────────────────────

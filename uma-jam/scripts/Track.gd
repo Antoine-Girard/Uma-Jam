@@ -137,3 +137,10 @@ func get_horse_rot(lane_idx: int, progress: float) -> float:
 	var f := clampf(s / L_turn, 0.0, 1.0)
 	var a := -PI / 2.0 - f * PI
 	return atan2(-cos(a), sin(a))
+
+
+func get_lane_length(lane_idx: int) -> float:
+	var r := INNER_R + (lane_idx + 0.5) * LANE_WIDTH
+	var L_str := 2.0 * HALF_STRAIGHT
+	var L_turn := PI * r
+	return 2.0 * L_str + 2.0 * L_turn

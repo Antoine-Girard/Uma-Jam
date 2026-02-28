@@ -1,4 +1,4 @@
-﻿class_name SkillManager
+class_name SkillManager
 extends Node
 
 
@@ -25,6 +25,7 @@ var endurance:       float = SkillData.MAX_ENDURANCE
 var _recovery_timer: float = 0.0
 
 var _buffs: Array[Dictionary] = []
+var _buff_counter: int = 0
 
 
 var _passive_state: Dictionary = {
@@ -100,14 +101,14 @@ func activate_skill(skill_id: String) -> bool:
 	if character_id == "tachyon" and skill_id == "endurance_recovery":
 		_apply_buff({
 			"id":             "passive_tachyon",
-			"speed_bonus":    3.0,
+			"speed_bonus":    12.0,
 			"accel_bonus":    0.0,
 			"recovery_bonus": 0.0,
 			"duration":       4.0,
 			"timer":          4.0,
 			"is_conditional": false,
 		})
-		passive_triggered.emit("tachyon", "Endurance Rush", "+3 vitesse pendant 4s")
+		passive_triggered.emit("tachyon", "Endurance Rush", "+12 vitesse pendant 4s")
 
 	return true
 
@@ -239,14 +240,14 @@ func _process_passives(delta: float) -> void:
 func _passive_el_condor(rank: int, phase: int) -> void:
 	var cond := (phase == SkillData.PHASE_LAST_SPURT and rank >= 2 and rank <= 4)
 	_set_conditional_buff("passive_el_condor",
-		0.0, 2.0, 0.0, cond, "Last Spurt Condor", "+2 accél (last spurt, 2e-4e)")
+		0.0, 8.0, 0.0, cond, "Last Spurt Condor", "+2 accél (last spurt, 2e-4e)")
 
 
 func _passive_gold_ship() -> void:
 	if _passive_state["overtaking"] and not _has_buff("passive_gold_ship"):
 		_apply_buff({
 			"id":             "passive_gold_ship",
-			"speed_bonus":    2.0,
+			"speed_bonus":    8.0,
 			"accel_bonus":    0.0,
 			"recovery_bonus": 0.0,
 			"duration":       5.0,
@@ -259,8 +260,8 @@ func _passive_gold_ship() -> void:
 func _passive_maruzenski(rank: int) -> void:
 	var cond := rank > 1
 	_set_conditional_buff("passive_maruzenski",
-		1.0, 0.0, 0.0, cond,
-		"Chasing Glory", "+1 vitesse (pas 1ère)")
+		4.0, 0.0, 0.0, cond,
+		"Chasing Glory", "+4 vitesse (pas 1ère)")
 
 
 func _passive_oguri_cap(phase: int) -> void:
@@ -277,14 +278,14 @@ func _passive_sakura(rank: int, phase: int) -> void:
 		_passive_state["sakura_triggered"] = true
 		_apply_buff({
 			"id":             "passive_sakura",
-			"speed_bonus":    1.0,
+			"speed_bonus":    4.0,
 			"accel_bonus":    0.0,
 			"recovery_bonus": 0.0,
 			"duration":       10.0,
 			"timer":          10.0,
 			"is_conditional": false,
 		})
-		passive_triggered.emit("sakura", "Mid-Race Surge", "+1 vitesse pendant 10s (T2, pas 1ère)")
+		passive_triggered.emit("sakura", "Mid-Race Surge", "+4 vitesse pendant 10s (T2, pas 1ère)")
 
 
 func _passive_spe_chan(rank: int, phase: int) -> void:
@@ -321,10 +322,13 @@ func _passive_rudolf(delta: float) -> void:
 
 
 func _apply_buff(buff: Dictionary) -> void:
-	for i in _buffs.size():
-		if _buffs[i]["id"] == buff["id"]:
-			_buffs.remove_at(i)
-			break
+	_buff_counter += 1
+	buff["uid"] = _buff_counter
+	if buff.get("is_conditional", false):
+		for i in _buffs.size():
+			if _buffs[i]["id"] == buff["id"]:
+				_buffs.remove_at(i)
+				break
 	_buffs.append(buff)
 
 

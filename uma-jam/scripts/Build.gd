@@ -50,12 +50,42 @@ func _ready():
 	back_btn.pressed.connect(_on_back_pressed)
 	_populate_characters()
 	_populate_cards()
-	# Connecte les slots une seule fois
 	for i in range(MAX_DECK_SIZE):
 		var slot: Panel = deck_slots.get_node("Slot%d" % (i + 1))
 		slot.mouse_filter = Control.MOUSE_FILTER_STOP
 		slot.gui_input.connect(_on_slot_gui_input.bind(i))
+	_restore_from_gamedata()
 	_refresh_deck_ui()
+	_refresh_card_grid()
+
+# ─── Restauration depuis GameData ───
+func _restore_from_gamedata():
+	if GameData.selected_icon_id != "":
+		for char_data in CHARACTERS:
+			if char_data["id"] == GameData.selected_icon_id:
+				selected_character = char_data
+				var tex = load("res://assets/characters/" + char_data["id"] + ".png")
+				portrait_texture.texture = tex
+				portrait_label.visible = tex == null
+				selected_name_lb.text  = char_data["name"]
+				selected_type_lb.text  = "[ %s ]" % char_data["type"]
+				selected_skill_lb.text = char_data.get("skill", "")
+				var idx := 0
+				for child in char_list.get_children():
+					if child is Button:
+						if CHARACTERS[idx]["id"] == char_data["id"]:
+							child.button_pressed = true
+							child.modulate = Color(1, 1, 1, 1)
+						else:
+							child.modulate = Color(1, 1, 1, 0.7)
+						idx += 1
+				print("[Build] Personnage restauré: %s" % char_data["name"])
+				break
+
+	var saved_deck: Array = GameData.get_deck()
+	if saved_deck.size() > 0:
+		deck = saved_deck.duplicate()
+		print("[Build] Deck restauré: %d cartes" % deck.size())
 
 # ─── Remplissage de la liste de personnages ───
 func _populate_characters():
@@ -250,5 +280,10 @@ func _on_slot_gui_input(event: InputEvent, index: int):
 
 # ─── Retour ───
 func _on_back_pressed():
-	print("[Build] Retour au menu principal")
+	if selected_character.size() > 0:
+		GameData.select_character(selected_character["name"], selected_character["id"])
+	if deck.size() > 0:
+		GameData.set_deck(deck)
+	print("[Build] Sauvegarde -> perso: %s | deck: %d cartes" % [
+		selected_character.get("name", "aucun"), deck.size()])
 	GameManager.go_to_main_menu()

@@ -15,7 +15,7 @@ const PHASE_LAST_SPURT := 2
 const ACTIVE_SKILLS: Dictionary = {
 	"speed_boost": {
 		"label":           "Boost de vitesse",
-		"speed_bonus":     2.0,
+		"speed_bonus":     12.0,
 		"accel_bonus":     0.0,
 		"recovery_bonus":  0.0,
 		"duration":        4.0,
@@ -25,7 +25,7 @@ const ACTIVE_SKILLS: Dictionary = {
 	"accel_boost": {
 		"label":           "Boost d'accélération",
 		"speed_bonus":     0.0,
-		"accel_bonus":     2.0,
+		"accel_bonus":     8.0,
 		"recovery_bonus":  0.0,
 		"duration":        3.0,
 		"endurance_cost":  2.0,
@@ -35,14 +35,14 @@ const ACTIVE_SKILLS: Dictionary = {
 		"label":           "Récupération d'endurance",
 		"speed_bonus":     0.0,
 		"accel_bonus":     0.0,
-		"recovery_bonus":  2.0,
-		"duration":        25.0,
-		"endurance_cost":  4.0,
+		"recovery_bonus":  1.0,
+		"duration":        30.0,
+		"endurance_cost":  3.0,
 		"condition":       "",
 	},
 	"speed_while_overtaking": {
 		"label":           "Vitesse en doublant",
-		"speed_bonus":     3.0,
+		"speed_bonus":     12.0,
 		"accel_bonus":     0.0,
 		"recovery_bonus":  0.0,
 		"duration":        5.0,
@@ -51,8 +51,8 @@ const ACTIVE_SKILLS: Dictionary = {
 	},
 	"groundwork": {
 		"label":           "Groundwork (départ)",
-		"speed_bonus":     2.0,
-		"accel_bonus":     2.0,
+		"speed_bonus":     8.0,
+		"accel_bonus":     8.0,
 		"recovery_bonus":  0.0,
 		"duration":        5.0,
 		"endurance_cost":  2.0,
