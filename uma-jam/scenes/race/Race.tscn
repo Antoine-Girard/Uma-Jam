@@ -4,25 +4,192 @@
 [ext_resource type="Script" uid="uid://qk8p6w2mbs7l" path="res://scripts/multiplayer_spawner.gd" id="2_20c28"]
 [ext_resource type="PackedScene" uid="uid://bio465hdb34kb" path="res://scenes/lobby/uma_player.tscn" id="3_uarok"]
 
-[node name="Race" type="Control" unique_id=2082584051]
-layout_mode = 3
+[sub_resource type="StyleBoxFlat" id="panel_dark"]
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+bg_color = Color(0, 0, 0, 0.55)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="panel_gold"]
+content_margin_left = 18.0
+content_margin_top = 10.0
+content_margin_right = 18.0
+content_margin_bottom = 10.0
+bg_color = Color(0.85, 0.65, 0.13, 0.75)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="btn_style"]
+content_margin_left = 20.0
+content_margin_top = 12.0
+content_margin_right = 20.0
+content_margin_bottom = 12.0
+bg_color = Color(0.15, 0.15, 0.2, 0.85)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 0.4)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[node name="Race" type="Node2D" unique_id=2044847074]
+script = ExtResource("1_race")
+
+[node name="Track" type="Node2D" parent="." unique_id=1370649757]
+script = ExtResource("2_track")
+
+[node name="Horses" type="Node2D" parent="." unique_id=1915761273]
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=618575373]
+
+[node name="LapPanel" type="PanelContainer" parent="UI" unique_id=787577553]
+offset_left = 20.0
+offset_top = 16.0
+offset_right = 220.0
+offset_bottom = 90.0
+theme_override_styles/panel = SubResource("panel_dark")
+
+[node name="VBox" type="VBoxContainer" parent="UI/LapPanel" unique_id=1844784114]
+layout_mode = 2
+
+[node name="LapTitle" type="Label" parent="UI/LapPanel/VBox" unique_id=482478514]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.75, 0.75, 1)
+theme_override_font_sizes/font_size = 13
+text = "TOUR"
+
+[node name="LapLabel" type="Label" parent="UI/LapPanel/VBox" unique_id=878137209]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 30
+text = "1 / 3"
+
+[node name="PosPanel" type="PanelContainer" parent="UI" unique_id=614601626]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -160.0
+offset_top = 16.0
+offset_right = -20.0
+offset_bottom = 90.0
+grow_horizontal = 0
+theme_override_styles/panel = SubResource("panel_gold")
+
+[node name="VBox" type="VBoxContainer" parent="UI/PosPanel" unique_id=1765602356]
+layout_mode = 2
+alignment = 1
+
+[node name="PosLabel" type="Label" parent="UI/PosPanel/VBox" unique_id=543346955]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 34
+text = "1er"
+horizontal_alignment = 1
+
+[node name="PosSubLabel" type="Label" parent="UI/PosPanel/VBox" unique_id=702421699]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.7)
+theme_override_font_sizes/font_size = 14
+text = "/ 6 coureurs"
+horizontal_alignment = 1
+
+[node name="LaneButtons" type="HBoxContainer" parent="UI" unique_id=1231287161]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -180.0
+offset_top = -100.0
+offset_right = 180.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
+alignment = 1
+
+[node name="InnerBtn" type="Button" parent="UI/LaneButtons" unique_id=1752304543]
+custom_minimum_size = Vector2(140, 70)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("btn_style")
+theme_override_styles/pressed = SubResource("btn_style")
+theme_override_styles/hover = SubResource("btn_style")
+text = "INT"
+
+[node name="LaneInfo" type="VBoxContainer" parent="UI/LaneButtons" unique_id=1960272833]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+alignment = 1
+
+[node name="LaneLabel" type="Label" parent="UI/LaneButtons/LaneInfo" unique_id=953283883]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.85)
+theme_override_font_sizes/font_size = 14
+text = "Couloir"
+horizontal_alignment = 1
+
+[node name="LaneNum" type="Label" parent="UI/LaneButtons/LaneInfo" unique_id=1848761193]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 22
+text = "1"
+horizontal_alignment = 1
+
+[node name="OuterBtn" type="Button" parent="UI/LaneButtons" unique_id=1871664615]
+custom_minimum_size = Vector2(140, 70)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.7, 0.5, 1)
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("btn_style")
+theme_override_styles/pressed = SubResource("btn_style")
+theme_override_styles/hover = SubResource("btn_style")
+text = "EXT"
+
+[node name="SkipBtn" type="Button" parent="UI" unique_id=1090109556]
+visible = false
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -100.0
+offset_top = 20.0
+offset_right = 100.0
+offset_bottom = 70.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("btn_style")
+theme_override_styles/pressed = SubResource("btn_style")
+theme_override_styles/hover = SubResource("btn_style")
+text = "ACCELERER >>"
+
+[node name="Countdown" type="Label" parent="UI" unique_id=86827883]
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -80.0
+offset_right = 200.0
+offset_bottom = 80.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_0wq1t")
-
-[node name="StatusLabel" type="Label" parent="." unique_id=232185128]
-layout_mode = 1
-offset_left = -200.0
-offset_top = -100.0
-offset_right = 200.0
-offset_bottom = 100.0
-theme_override_font_sizes/font_size = 32
-text = "🏁 RACE STARTED! 🏁"
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 100
+text = "3"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -31,3 +198,80 @@ _spawnable_scenes = PackedStringArray("uid://bio465hdb34kb")
 spawn_path = NodePath("..")
 script = ExtResource("2_20c28")
 network_player = ExtResource("3_uarok")
+[node name="EndOverlay" type="ColorRect" parent="UI" unique_id=1160563844]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.65)
+
+[node name="VBox" type="VBoxContainer" parent="UI/EndOverlay" unique_id=1057458352]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -130.0
+offset_right = 250.0
+offset_bottom = 130.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+
+[node name="WinTitle" type="Label" parent="UI/EndOverlay/VBox" unique_id=882477148]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.7)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 52
+text = "VICTOIRE"
+horizontal_alignment = 1
+
+[node name="WinName" type="Label" parent="UI/EndOverlay/VBox" unique_id=950518307]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 1
+
+[node name="Sep" type="Control" parent="UI/EndOverlay/VBox" unique_id=855931677]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="Rankings" type="Label" parent="UI/EndOverlay/VBox" unique_id=1759545303]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+
+[node name="Sep2" type="Control" parent="UI/EndOverlay/VBox" unique_id=16001549]
+custom_minimum_size = Vector2(0, 15)
+layout_mode = 2
+
+[node name="BtnRow" type="HBoxContainer" parent="UI/EndOverlay/VBox" unique_id=1022400571]
+layout_mode = 2
+alignment = 1
+
+[node name="RetryBtn" type="Button" parent="UI/EndOverlay/VBox" unique_id=896889653]
+custom_minimum_size = Vector2(260, 55)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("btn_style")
+theme_override_styles/pressed = SubResource("btn_style")
+theme_override_styles/hover = SubResource("btn_style")
+text = "RECOMMENCER"
+
+[node name="Sep3" type="Control" parent="UI/EndOverlay/VBox" unique_id=1704163610]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+
+[node name="MenuBtn" type="Button" parent="UI/EndOverlay/VBox" unique_id=1649844397]
+custom_minimum_size = Vector2(260, 55)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("btn_style")
+theme_override_styles/pressed = SubResource("btn_style")
+theme_override_styles/hover = SubResource("btn_style")
+text = "RETOUR AU MENU"

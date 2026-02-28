@@ -37,6 +37,12 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "JOUER"
 
+[node name="TestButton" type="Button" parent="VBoxContainer"]
+custom_minimum_size = Vector2(300, 80)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "TEST (Solo + Bots)"
+
 [node name="Separator2" type="Control" parent="VBoxContainer" unique_id=146376773]
 custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
