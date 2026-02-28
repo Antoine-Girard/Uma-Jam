@@ -17,6 +17,7 @@ anchors_preset = 10
 anchor_right = 1.0
 offset_top = 40.0
 offset_bottom = 120.0
+grow_horizontal = 2
 theme_override_font_sizes/font_size = 48
 text = "🏇 UMA RACING 🏇"
 horizontal_alignment = 1
@@ -29,6 +30,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 offset_top = -120.0
 offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
 alignment = 1
 
 [node name="BuildButton" type="Button" parent="BottomBar" unique_id=1414980279]
@@ -51,3 +54,13 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 22
 text = "PROFILE"
+
+[node name="VBoxContainer#TestButton" type="Button" parent="." unique_id=149143589]
+custom_minimum_size = Vector2(300, 80)
+layout_mode = 0
+theme_override_font_sizes/font_size = 24
+text = "TEST (Solo + Bots)"
+
+[node name="VBoxContainer#Separator2" type="Control" parent="." unique_id=146376773]
+custom_minimum_size = Vector2(0, 20)
+anchors_preset = 0

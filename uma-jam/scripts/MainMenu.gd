@@ -9,6 +9,11 @@ func _ready():
 	$BottomBar/BuildButton.pressed.connect(_on_build_pressed)
 	$BottomBar/RaceButton.pressed.connect(_on_race_pressed)
 	$BottomBar/ProfileButton.pressed.connect(_on_profile_pressed)
+	$"VBoxContainer#TestButton".pressed.connect(_on_test_pressed)
+
+func _on_test_pressed():
+	print("test")
+	GameManager.go_to_race()
 
 func _on_build_pressed():
 	print("[MainMenu] Clic sur BUILD")
