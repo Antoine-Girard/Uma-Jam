@@ -1,19 +1,23 @@
 extends Control
 
+# ============================================================================
+# MainMenu.gd - Menu principal du jeu
+# ============================================================================
+
 func _ready():
 	print("[MainMenu] Menu principal chargé")
-	$VBoxContainer/PlayButton.pressed.connect(_on_play_pressed)
-	$VBoxContainer/TestButton.pressed.connect(_on_test_pressed)
-	$VBoxContainer/QuitButton.pressed.connect(_on_quit_pressed)
+	$BottomBar/BuildButton.pressed.connect(_on_build_pressed)
+	$BottomBar/RaceButton.pressed.connect(_on_race_pressed)
+	$BottomBar/ProfileButton.pressed.connect(_on_profile_pressed)
 
-func _on_play_pressed():
-	print("[MainMenu] Clic sur JOUER → Matchmaking")
+func _on_build_pressed():
+	print("[MainMenu] Clic sur BUILD")
+	GameManager.go_to_build()
+
+func _on_race_pressed():
+	print("[MainMenu] Clic sur RACE → Matchmaking")
 	GameManager.go_to_matchmaking()
 
-func _on_test_pressed():
-	print("[MainMenu] Clic sur TEST → Race directe")
-	GameManager.go_to_race()
-
-func _on_quit_pressed():
-	print("[MainMenu] Fermeture du jeu")
-	get_tree().quit()
+func _on_profile_pressed():
+	print("[MainMenu] Clic sur PROFILE")
+	GameManager.go_to_profile()
