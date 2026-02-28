@@ -55,7 +55,7 @@ size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 22
 text = "PROFILE"
 
-[node name="VBoxContainer#TestButton" type="Button" parent="." unique_id=1197051441]
+[node name="VBoxContainer#TestButton" type="Button" parent="." unique_id=149143589]
 custom_minimum_size = Vector2(300, 80)
 layout_mode = 0
 theme_override_font_sizes/font_size = 24
