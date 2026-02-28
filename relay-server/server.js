@@ -112,8 +112,8 @@ function handleFindMatch(ws, data) {
   // Mettre à jour tout le lobby
   broadcastLobbyUpdate(targetRoom);
 
-  // Lancer le timer si c'est le 2ème joueur (ou plus)
-  if (room.players.size >= 2 && !room.timer) {
+  // Lancer le timer dès le premier joueur
+  if (!room.timer) {
     startRoomCountdown(targetRoom);
   }
 
