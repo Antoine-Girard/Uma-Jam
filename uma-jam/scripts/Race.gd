@@ -296,17 +296,17 @@ func _spawn_horses() -> void:
 		var bot_idx := 0
 		while _horses.size() < MAX_PLAYERS:
 			var bot_cid: String = BOT_CHAR_IDS[(i + bot_idx) % BOT_CHAR_IDS.size()]
-			_make_horse(_horses.size(), bot_names[bot_idx % bot_names.size()], bot_cid, false)
+			_make_horse(_horses.size(), bot_names[bot_idx % bot_names.size()] + " (bot)", bot_cid, false)
 			bot_idx += 1
 	else:
 		# Mode solo / test
 		if player_char_id == "":
 			player_char_id = "tachyon"
-		_my_horse = _make_horse(0, "Joueur", player_char_id, true)
+		_my_horse = _make_horse(0, GameData.player_name, player_char_id, true)
 		var bot_names := ["Sakura", "Hana", "Kaze", "Tsuki", "Hoshi"]
 		for b in range(5):
 			var bot_cid: String = BOT_CHAR_IDS[(b + 1) % BOT_CHAR_IDS.size()]
-			_make_horse(b + 1, bot_names[b], bot_cid, false)
+			_make_horse(b + 1, bot_names[b] + " (bot)", bot_cid, false)
 
 
 func _make_horse(lane: int, pname: String, char_id: String = "", is_local: bool = false) -> HorseRacer:
@@ -372,7 +372,11 @@ func _exit_tree() -> void:
 		NetworkManager.player_left.disconnect(_on_remote_player_left)
 
 func _on_retry() -> void:
-	GameManager.go_to_race()
+	if NetworkManager.is_online:
+		NetworkManager.disconnect_from_relay()
+		GameManager.go_to_main_menu()
+	else:
+		GameManager.go_to_race()
 
 func _on_menu() -> void:
 	if NetworkManager.is_online:
@@ -507,7 +511,7 @@ func get_total_laps() -> int:
 func _build_skill_ui() -> void:
 	var skill_ids: Array = GameData.get_skill_ids()
 	if skill_ids.is_empty():
-		skill_ids = ["speed_boost", "accel_boost", "endurance_recovery"]
+		skill_ids = ["speed_boost", "accel_boost", "endurance_recovery", "speed_while_overtaking", "groundwork"]
 
 	_skill_panel = PanelContainer.new()
 	_skill_panel.name = "SkillPanel"
@@ -657,7 +661,7 @@ func _update_endurance_ui() -> void:
 		var btn: Button = _skill_buttons[i]
 		var skill_ids: Array = GameData.get_skill_ids()
 		if skill_ids.is_empty():
-			skill_ids = ["speed_boost", "accel_boost", "endurance_recovery"]
+			skill_ids = ["speed_boost", "accel_boost", "endurance_recovery", "speed_while_overtaking", "groundwork"]
 		if i < skill_ids.size():
 			var sid: String = skill_ids[i]
 			if SkillData.ACTIVE_SKILLS.has(sid):
@@ -698,6 +702,12 @@ func _show_results() -> void:
 		var marker := "  >>  " if h == _my_horse else "      "
 		lines += "%s%s%s%s\n" % [_ordinal(i + 1), marker, h.horse_name, medal]
 	_rankings.text = lines
+
+	# En matchmaking : pas de retry, juste retour menu
+	if NetworkManager.is_online:
+		_retry_btn.text = "RETOUR AU MENU"
+	else:
+		_retry_btn.text = "REJOUER"
 
 	_end_overlay.modulate.a = 0.0
 	_end_overlay.visible = true

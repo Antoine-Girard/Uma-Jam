@@ -22,6 +22,8 @@ func _on_build_pressed():
 	GameManager.go_to_build()
 
 func _on_race_pressed():
+	if not _check_build_ready():
+		return
 	print("[MainMenu] Clic sur RACE → Test solo")
 	NetworkManager.solo_mode = true
 	NetworkManager.players_connected.clear()
@@ -32,9 +34,28 @@ func _on_profile_pressed():
 	GameManager.go_to_profile()
 
 func _on_matchmaking_pressed():
+	if not _check_build_ready():
+		return
 	print("[MainMenu] Clic sur MATCHMAKING")
 	NetworkManager.solo_mode = false
 	GameManager.go_to_matchmaking()
+
+
+func _check_build_ready() -> bool:
+	if GameData.character_id == "" or GameData.selected_skill_ids.is_empty():
+		# Flash le bouton BUILD pour indiquer qu'il faut d'abord construire
+		var build_btn: Button = $BottomBar/BuildButton
+		var original_text: String = build_btn.text
+		build_btn.text = "BUILD D'ABORD !"
+		build_btn.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
+		var tw := create_tween()
+		tw.tween_interval(1.5)
+		tw.tween_callback(func():
+			build_btn.text = original_text
+			build_btn.remove_theme_color_override("font_color")
+		)
+		return false
+	return true
 
 func _on_quit_pressed():
 	print("[MainMenu] Fermeture du jeu")
