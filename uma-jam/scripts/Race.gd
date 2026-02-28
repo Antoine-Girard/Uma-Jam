@@ -391,6 +391,20 @@ func _ordinal(n: int) -> String:
 	return "%deme" % n
 
 
+# ─── Skill system helpers (used by SkillManager) ─────────────────────────────
+
+## Returns the 1-based rank of the given horse (1 = first).
+## Called by SkillManager._get_my_rank() to avoid duplicating logic.
+func get_horse_rank(horse: HorseRacer) -> int:
+	return _get_rank(horse)
+
+
+## Returns the total number of laps in this race.
+## Called by SkillManager._get_race_phase() for phase calculation.
+func get_total_laps() -> int:
+	return LAPS
+
+
 # ─── Fin de course ───────────────────────────────────────────────────────────
 
 func _show_results() -> void:

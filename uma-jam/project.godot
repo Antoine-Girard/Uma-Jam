@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 GameData="*res://scripts/GameData.gd"
 NetworkManager="*res://scripts/NetworkManager.gd"
 GameManager="*res://scripts/GameManager.gd"
+SkillData="*res://scripts/SkillData.gd"
 
 [display]
 
