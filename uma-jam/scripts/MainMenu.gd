@@ -7,10 +7,10 @@ extends Control
 func _ready():
 	print("[MainMenu] Menu principal chargé")
 	$BottomBar/BuildButton.pressed.connect(_on_build_pressed)
-	$BottomBar/RaceButton.pressed.connect(_on_race_pressed)
 	$BottomBar/ProfileButton.pressed.connect(_on_profile_pressed)
-	$TopRight/MatchmakingBtn.pressed.connect(_on_matchmaking_pressed)
-	$QuitBtn.pressed.connect(_on_quit_pressed)
+	$MatchmakingBtn.pressed.connect(_on_matchmaking_pressed)
+	$TopLeft/RaceBtn.pressed.connect(_on_race_pressed)
+	$TopRight/QuitBtn.pressed.connect(_on_quit_pressed)
 
 	# Réveiller le serveur relay en fond dès le lancement du jeu
 	# Comme ça quand le joueur clique "Matchmaking", le serveur est déjà prêt

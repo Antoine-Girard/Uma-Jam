@@ -86,7 +86,16 @@ func _on_lobby_updated(players: Array, time_remaining: int) -> void:
 		_set_state(MatchState.IN_LOBBY)
 
 	_count_label.text = "%d / 6 joueurs" % players.size()
-	_timer_label.text = "Lancement dans %ds" % time_remaining if time_remaining > 0 else "Lancement..."
+
+	if players.size() <= 1:
+		_status_label.text = "En attente d'adversaires..."
+	else:
+		_status_label.text = "Adversaires trouves !"
+
+	if time_remaining > 0:
+		_timer_label.text = "Lancement dans %ds" % time_remaining
+	else:
+		_timer_label.text = "Lancement..."
 
 	_clear_player_list()
 	for p in players:

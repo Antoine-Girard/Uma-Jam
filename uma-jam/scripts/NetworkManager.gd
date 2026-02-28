@@ -1,7 +1,7 @@
 extends Node
 
 ## URL du serveur relay — à changer après déploiement sur Render
-const RELAY_URL := "ws://localhost:8080"
+const RELAY_URL := "wss://uma-jam.onrender.com"
 const MAX_PLAYERS := 6
 
 # ─── État ─────────────────────────────────────────────────────────────────────

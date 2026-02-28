@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(where node)"
+      "Bash(where node)",
+      "WebFetch(domain:uma-jam.onrender.com)",
+      "Bash(git add relay-server/server.js)",
+      "Bash(git commit:*)",
+      "Bash(git push origin Arthur-NewNetworkServer)"
     ]
   }
 }
