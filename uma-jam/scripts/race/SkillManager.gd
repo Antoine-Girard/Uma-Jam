@@ -35,6 +35,7 @@ var _passive_state: Dictionary = {
 	"overtaking":       false,
 	"overtaking_timer": 0.0,
 	"sakura_triggered": false,
+	"oguri_triggered":  false,
 	"rudolf_cooldown":  0.0,
 }
 
@@ -114,7 +115,7 @@ func activate_skill(skill_id: String) -> bool:
 	if character_id == "tachyon" and skill_id == "endurance_recovery":
 		_apply_buff({
 			"id":             "passive_tachyon",
-			"speed_bonus":    10.0,
+			"speed_bonus":    6.0,
 			"accel_bonus":    0.0,
 			"recovery_bonus": 0.0,
 			"duration":       5.0,
@@ -122,7 +123,6 @@ func activate_skill(skill_id: String) -> bool:
 			"is_conditional": false,
 		})
 		passive_triggered.emit("tachyon", "Endurance Rush", "+12 speed for 4s")
-
 	return true
 
 func get_speed_bonus() -> float:
@@ -254,16 +254,26 @@ func _passive_gold_ship() -> void:
 		passive_triggered.emit("gold_ship", "Overtaking Rush", "+2 speed for 5s")
 
 func _passive_maruzenski(rank: int) -> void:
-	var cond := rank > 1
+	var cond := rank == 1
 	_set_conditional_buff("passive_maruzenski",
-		4.0, 0.0, 0.0, cond,
-		"Chasing Glory", "+4 speed (not 1st)")
+		9.0, 0.0, 0.0, cond,
+		"Chasing Glory", "+10 speed (not 1st)")
 
 func _passive_oguri_cap(phase: int) -> void:
-	var cond := (phase == SkillData.PHASE_LAST_SPURT)
-	_set_conditional_buff("passive_oguri_cap",
-		12.0, 8.0, 0.0, cond,
-		"Final Stretch", "+4 speed/accel (final straight)")
+	if _passive_state.get("oguri_triggered", false):
+		return
+	if phase == SkillData.PHASE_LAST_SPURT:
+		_passive_state["oguri_triggered"] = true
+		_apply_buff({
+			"id":             "passive_oguri_cap",
+			"speed_bonus":    20.0,
+			"accel_bonus":    10.0,
+			"recovery_bonus": 0.0,
+			"duration":       60.0,
+			"timer":          60.0,
+			"is_conditional": false,
+		})
+		passive_triggered.emit(character_id, "Final Stretch", "+20/+10 speed/accel (60s)")
 
 func _passive_sakura(rank: int, phase: int) -> void:
 	if _passive_state["sakura_triggered"]:
@@ -298,6 +308,7 @@ func _passive_rudolf(delta: float) -> void:
 		_passive_state["rudolf_cooldown"] = _RUDOLF_INTERVAL * 0.5
 		return
 
+<<<<<<< Updated upstream
 	var target_sm: SkillManager = null
 	for child in target.get_children():
 		if child is SkillManager:
@@ -309,6 +320,19 @@ func _passive_rudolf(delta: float) -> void:
 		debuff_applied.emit(target, 2.0, _RUDOLF_INTERVAL)
 		passive_triggered.emit("rudolf", "Pressure from Behind",
 			"Debuff %s: -2 speed for %.0fs" % [target.horse_name, _RUDOLF_INTERVAL])
+=======
+	_apply_buff({
+		"id":             "passive_rudolf_pressure",
+		"speed_bonus":    7.0,
+		"accel_bonus":    0.0,
+		"recovery_bonus": 0.0,
+		"duration":       _RUDOLF_INTERVAL,
+		"timer":          _RUDOLF_INTERVAL,
+		"is_conditional": false,
+	})
+	passive_triggered.emit("rudolf", "Pressure from Behind",
+		"Speed +2 for %.0fs (horse ahead in lane)" % _RUDOLF_INTERVAL)
+>>>>>>> Stashed changes
 
 	_passive_state["rudolf_cooldown"] = _RUDOLF_INTERVAL
 
