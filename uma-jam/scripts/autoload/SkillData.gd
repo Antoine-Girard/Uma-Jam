@@ -119,5 +119,5 @@ const CHARACTER_PASSIVES: Dictionary = {
 	"oguri_cap":       { "label": "Final Stretch",        "desc": "Speed and acceleration increased in the final straight (+4 speed/accel, conditional permanent)" },
 	"sakura":          { "label": "Mid-Race Surge",       "desc": "Gains speed in T2 if not 1st (+1 speed, 10s, triggers once)" },
 	"spe_chan":         { "label": "Underdog Sprint",      "desc": "Gains acceleration in last spurt between 4th and 6th (+3 accel, conditional permanent)" },
-	"rudolf":          { "label": "Pressure from Behind", "desc": "Debuffs the horse directly ahead in the same lane (-2 speed, 3s)" },
+	"rudolf":          { "label": "Pressure from Behind", "desc": "Gains speed when a horse is directly ahead in the same lane (+2 speed, 3s)" },
 }

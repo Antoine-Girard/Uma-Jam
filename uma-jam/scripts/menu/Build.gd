@@ -10,7 +10,7 @@ const CHARACTERS = [
 	{ "id": "oguricap_icon",       "name": "Oguri Cap",        "type": "All in", "skill": "Gains speed in the final straight (+4 acceleration and speed)" },
 	{ "id": "sakurabakushino_icon","name": "Sakura Bakushin",  "type": "Sprint",    "skill": "Gains speed in T2 if not first (+1, +10s)" },
 	{ "id": "specialweek_icon",    "name": "Special Week",     "type": "Power", "skill": "Gains acceleration during last spurt when between 4th and 6th (+3, perm)" },
-	{ "id": "symbolirudolf_icon",  "name": "Symboli Rudolf",   "type": "Debuff",  "skill": "Debuffs the horse ahead in the same lane (-2, 3s)" },
+	{ "id": "symbolirudolf_icon",  "name": "Symboli Rudolf",   "type": "Speed",  "skill": "Gains speed when a horse is ahead in the same lane (+2, 3s)" },
 ]
 
 const CARDS = [
