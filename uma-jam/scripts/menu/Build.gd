@@ -8,7 +8,7 @@ const CHARACTERS = [
 	{ "id": "goldship_icon",       "name": "Gold Ship",        "type": "Overtake", "skill": "Gains speed when overtaking (+2; 5s)" },
 	{ "id": "maruzensky_icon",     "name": "Maruzensky",       "type": "Speed",   "skill": "Gains speed if not 1st (+1, perm but +1 endurance cost on skills)" },
 	{ "id": "oguricap_icon",       "name": "Oguri Cap",        "type": "All in", "skill": "Gains speed in the final straight (+4 acceleration and speed)" },
-	{ "id": "sakurabakushino_icon","name": "Sakura Bakushin",  "type": "Sprint",    "skill": "Gains speed in T2 if not first (+1, +10s)" },
+	{ "id": "sakurabakushino_icon","name": "Sakura Bakushin",  "type": "Speed",    "skill": "Gains constant speed while not 1st (+15, permanent)" },
 	{ "id": "specialweek_icon",    "name": "Special Week",     "type": "Power", "skill": "Gains acceleration during last spurt when between 4th and 6th (+3, perm)" },
 	{ "id": "symbolirudolf_icon",  "name": "Symboli Rudolf",   "type": "Speed",  "skill": "Gains speed when a horse is ahead in the same lane (+2, 3s)" },
 ]
@@ -20,7 +20,7 @@ const CARDS = [
 	{ "id": "vitesse_doublement",   "name": "Overtaking Speed", "category": "Condition", "img": "tex_support_card_30043", "desc": "Gains speed when overtaking (+3, 5s, -3 endurance)" },
 	{ "id": "acceleration_t1",     "name": "Starting Accel",    "category": "Condition", "img": "tex_support_card_30076", "desc": "Acceleration from race start (+2, 5s, -2) — T1 only" },
 	{ "id": "leader_t3",           "name": "Leader's T3 Surge", "category": "Condition", "img": "tex_support_card_30265", "desc": "Gains speed and accel if 1st at T3 (+4, +3, 10s, -2 endurance)" },
-	{ "id": "last_place_t3",       "name": "Comeback Sprint",   "category": "Condition", "img": "tex_support_card_30256", "desc": "Gains speed and accel if last at T3 (+5, +4, 10s, -2 endurance)" },
+	{ "id": "last_place_t3",       "name": "Comeback Sprint",   "category": "Condition", "img": "tex_support_card_30256", "desc": "Gains speed and accel if 4th-6th at T3 (+5, +4, 10s, -2 endurance)" },
 	{ "id": "drafting_speed",      "name": "Drafting Burst",    "category": "Condition", "img": "tex_support_card_30057", "desc": "Gains speed when close behind a horse in same lane (+3, 4s, -1 endurance)" },
 ]
 

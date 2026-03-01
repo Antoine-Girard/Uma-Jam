@@ -35,8 +35,9 @@ var _passive_state: Dictionary = {
 	"overtaking":       false,
 	"overtaking_timer": 0.0,
 	"sakura_triggered": false,
-	"oguri_triggered":  false,
 	"rudolf_cooldown":  0.0,
+	"goldship_passed":  [],   # horses currently behind that were ahead last frame
+	"goldship_prev_behind": [],  # horses that were behind last frame
 }
 
 func init(horse: Node, race: Node2D, horses: Array,
@@ -122,8 +123,7 @@ func activate_skill(skill_id: String) -> bool:
 			"timer":          5.0,
 			"is_conditional": false,
 		})
-		passive_triggered.emit("tachyon", "Endurance Rush", "+10 speed for 5s")
-
+		passive_triggered.emit("tachyon", "Endurance Rush", "+12 speed for 4s")
 	return true
 
 func get_speed_bonus() -> float:
@@ -241,18 +241,41 @@ func _passive_el_condor(rank: int, phase: int) -> void:
 	_set_conditional_buff("passive_el_condor",
 		0.0, 8.0, 0.0, cond, "Last Spurt Condor", "+2 accel (last spurt, 2nd-4th)")
 
+var _goldship_buff_counter: int = 0
+
 func _passive_gold_ship() -> void:
-	if _passive_state["overtaking"] and not _has_buff("passive_gold_ship"):
-		_apply_buff({
-			"id":             "passive_gold_ship",
-			"speed_bonus":    8.0,
-			"accel_bonus":    0.0,
-			"recovery_bonus": 0.0,
-			"duration":       5.0,
-			"timer":          5.0,
-			"is_conditional": false,
-		})
-		passive_triggered.emit("gold_ship", "Overtaking Rush", "+2 speed for 5s")
+	if horse_ref == null:
+		return
+	var my_score: float = horse_ref.laps_completed + horse_ref.progress
+
+	# Build list of horses currently behind us
+	var currently_behind: Array = []
+	for h in all_horses:
+		if h == horse_ref:
+			continue
+		var s: float = h.laps_completed + h.progress
+		if s < my_score:
+			currently_behind.append(h)
+
+	# Detect newly overtaken horses (were ahead or equal last frame, now behind)
+	var prev_behind: Array = _passive_state.get("goldship_prev_behind", [])
+	for h in currently_behind:
+		if h not in prev_behind:
+			# Just overtook this horse — stack a new buff
+			_goldship_buff_counter += 1
+			_apply_buff({
+				"id":             "passive_gold_ship_%d" % _goldship_buff_counter,
+				"speed_bonus":    10.0,
+				"accel_bonus":    0.0,
+				"recovery_bonus": 0.0,
+				"duration":       5.0,
+				"timer":          5.0,
+				"is_conditional": false,
+			})
+			passive_triggered.emit("gold_ship", "Overtaking Rush",
+				"+2 speed for 5s (overtook %s)" % h.horse_name)
+
+	_passive_state["goldship_prev_behind"] = currently_behind
 
 func _passive_maruzenski(rank: int) -> void:
 	var cond := rank == 1
@@ -276,21 +299,11 @@ func _passive_oguri_cap(phase: int) -> void:
 		})
 		passive_triggered.emit(character_id, "Final Stretch", "+20/+10 speed/accel (60s)")
 
-func _passive_sakura(rank: int, phase: int) -> void:
-	if _passive_state["sakura_triggered"]:
-		return
-	if phase == SkillData.PHASE_T2 and rank > 1:
-		_passive_state["sakura_triggered"] = true
-		_apply_buff({
-			"id":             "passive_sakura",
-			"speed_bonus":    4.0,
-			"accel_bonus":    0.0,
-			"recovery_bonus": 0.0,
-			"duration":       10.0,
-			"timer":          10.0,
-			"is_conditional": false,
-		})
-		passive_triggered.emit("sakura", "Mid-Race Surge", "+4 speed for 10s (T2, not 1st)")
+func _passive_sakura(rank: int, _phase: int) -> void:
+	var cond := (rank > 1)
+	_set_conditional_buff("passive_sakura",
+		10.0, 0.0, 0.0, cond,
+		"Mid-Race Surge", "+10 speed (not 1st)")
 
 func _passive_spe_chan(rank: int, phase: int) -> void:
 	var cond := (phase == SkillData.PHASE_LAST_SPURT and rank >= 4 and rank <= 6)
@@ -311,7 +324,7 @@ func _passive_rudolf(delta: float) -> void:
 
 	_apply_buff({
 		"id":             "passive_rudolf_pressure",
-		"speed_bonus":    2.0,
+		"speed_bonus":    13.0,
 		"accel_bonus":    0.0,
 		"recovery_bonus": 0.0,
 		"duration":       _RUDOLF_INTERVAL,
@@ -370,7 +383,7 @@ func check_skill_condition(condition: String) -> bool:
 		"overtaking": return _passive_state.get("overtaking", false)
 		"phase_t1":   return _get_race_phase() == SkillData.PHASE_T1
 		"first_at_t3": return _get_race_phase() == SkillData.PHASE_LAST_SPURT and _get_my_rank() == 1
-		"last_at_t3":  return _get_race_phase() == SkillData.PHASE_LAST_SPURT and _get_my_rank() == all_horses.size()
+		"last_at_t3":  return _get_race_phase() == SkillData.PHASE_LAST_SPURT and _get_my_rank() >= 4 and _get_my_rank() <= 6
 		"drafting":    return _is_drafting()
 		_:            return true
 
