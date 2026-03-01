@@ -239,7 +239,7 @@ func _process_passives(delta: float) -> void:
 func _passive_el_condor(rank: int, phase: int) -> void:
 	var cond := (phase == SkillData.PHASE_LAST_SPURT and rank >= 2 and rank <= 4)
 	_set_conditional_buff("passive_el_condor",
-		0.0, 8.0, 0.0, cond, "Last Spurt Condor", "+2 accel (last spurt, 2nd-4th)")
+		0.0, 8.0, 0.0, cond, "Last Spurt Condor", "+8 accel (last spurt, 2nd-4th)")
 
 var _goldship_buff_counter: int = 0
 
@@ -273,7 +273,7 @@ func _passive_gold_ship() -> void:
 				"is_conditional": false,
 			})
 			passive_triggered.emit("gold_ship", "Overtaking Rush",
-				"+2 speed for 5s (overtook %s)" % h.horse_name)
+				"+10 speed for 5s (overtook %s)" % h.horse_name)
 
 	_passive_state["goldship_prev_behind"] = currently_behind
 
@@ -281,7 +281,7 @@ func _passive_maruzenski(rank: int) -> void:
 	var cond := rank == 1
 	_set_conditional_buff("passive_maruzenski",
 		9.0, 0.0, 0.0, cond,
-		"Chasing Glory", "+10 speed (not 1st)")
+		"Chasing Glory", "+9 speed (not 1st)")
 
 func _passive_oguri_cap(phase: int) -> void:
 	if _passive_state.get("oguri_triggered", false):
@@ -297,7 +297,7 @@ func _passive_oguri_cap(phase: int) -> void:
 			"timer":          60.0,
 			"is_conditional": false,
 		})
-		passive_triggered.emit(character_id, "Final Stretch", "+20/+10 speed/accel (60s)")
+		passive_triggered.emit(character_id, "Final Stretch", "+25/+10 speed/accel (60s)")
 
 func _passive_sakura(rank: int, _phase: int) -> void:
 	var cond := (rank > 1)
@@ -332,7 +332,7 @@ func _passive_rudolf(delta: float) -> void:
 		"is_conditional": false,
 	})
 	passive_triggered.emit("rudolf", "Pressure from Behind",
-		"Speed +2 for %.0fs (horse ahead in lane)" % _RUDOLF_INTERVAL)
+		"Speed +13 for %.0fs (horse ahead in lane)" % _RUDOLF_INTERVAL)
 
 	_passive_state["rudolf_cooldown"] = _RUDOLF_INTERVAL
 
