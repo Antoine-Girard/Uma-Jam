@@ -123,7 +123,7 @@ func activate_skill(skill_id: String) -> bool:
 			"timer":          5.0,
 			"is_conditional": false,
 		})
-		passive_triggered.emit("tachyon", "Endurance Rush", "+12 speed for 4s")
+		passive_triggered.emit("tachyon", "Endurance Rush", "+6 speed for 5s")
 	return true
 
 func get_speed_bonus() -> float:
@@ -290,7 +290,7 @@ func _passive_oguri_cap(phase: int) -> void:
 		_passive_state["oguri_triggered"] = true
 		_apply_buff({
 			"id":             "passive_oguri_cap",
-			"speed_bonus":    20.0,
+			"speed_bonus":    25.0,
 			"accel_bonus":    10.0,
 			"recovery_bonus": 0.0,
 			"duration":       60.0,
