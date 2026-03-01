@@ -3,25 +3,25 @@ extends Control
 const MAX_DECK_SIZE = 5
 
 const CHARACTERS = [
-	{ "id": "agnestachyon_icon",   "name": "Agnes Tachyon",   "type": "Endurance",   "skill": "Gains speed when activating an endurance skill (+3; 4s)" },
-	{ "id": "elcondorpasa_icon",   "name": "El Condor Pasa",   "type": "Power", "skill": "Gains acceleration during last spurt when between 2nd and 4th (+2, perm)" },
-	{ "id": "goldship_icon",       "name": "Gold Ship",        "type": "Overtake", "skill": "Gains speed when overtaking (+2; 5s)" },
-	{ "id": "maruzensky_icon",     "name": "Maruzensky",       "type": "Speed",   "skill": "Gains speed if not 1st (+1, perm but +1 endurance cost on skills)" },
-	{ "id": "oguricap_icon",       "name": "Oguri Cap",        "type": "All in", "skill": "Gains speed in the final straight (+4 acceleration and speed)" },
-	{ "id": "sakurabakushino_icon","name": "Sakura Bakushin",  "type": "Speed",    "skill": "Gains constant speed while not 1st (+15, permanent)" },
-	{ "id": "specialweek_icon",    "name": "Special Week",     "type": "Power", "skill": "Gains acceleration during last spurt when between 4th and 6th (+3, perm)" },
-	{ "id": "symbolirudolf_icon",  "name": "Symboli Rudolf",   "type": "Speed",  "skill": "Gains speed when a horse is ahead in the same lane (+2, 3s)" },
+	{ "id": "agnestachyon_icon",   "name": "Agnes Tachyon",   "type": "Endurance",   "skill": SkillData.CHARACTER_PASSIVES["tachyon"].desc },
+	{ "id": "elcondorpasa_icon",   "name": "El Condor Pasa",   "type": "Power", "skill": SkillData.CHARACTER_PASSIVES["el_condor_passa"].desc },
+	{ "id": "goldship_icon",       "name": "Gold Ship",        "type": "Overtake", "skill": SkillData.CHARACTER_PASSIVES["gold_ship"].desc },
+	{ "id": "maruzensky_icon",     "name": "Maruzensky",       "type": "Speed",   "skill": SkillData.CHARACTER_PASSIVES["maruzenski"].desc },
+	{ "id": "oguricap_icon",       "name": "Oguri Cap",        "type": "All in", "skill": SkillData.CHARACTER_PASSIVES["oguri_cap"].desc },
+	{ "id": "sakurabakushino_icon","name": "Sakura Bakushin",  "type": "Sprint",    "skill": SkillData.CHARACTER_PASSIVES["sakura"].desc },
+	{ "id": "specialweek_icon",    "name": "Special Week",     "type": "Power", "skill": SkillData.CHARACTER_PASSIVES["spe_chan"].desc },
+	{ "id": "symbolirudolf_icon",  "name": "Symboli Rudolf",   "type": "Debuff",  "skill": SkillData.CHARACTER_PASSIVES["rudolf"].desc },
 ]
 
 const CARDS = [
-	{ "id": "vitesse_active",      "name": "Speed",          "category": "Active",     "img": "tex_support_card_30011", "desc": "Gains speed (+2, 4s, -2 endurance)" },
-	{ "id": "acceleration_active", "name": "Acceleration",     "category": "Active",     "img": "tex_support_card_30014", "desc": "Gains acceleration (+2, 3s, -2 endurance)" },
-	{ "id": "endurance_active",    "name": "Endurance Recovery",  "category": "Active",     "img": "tex_support_card_30028", "desc": "Endurance recovery (+2, 25s, -4 endurance)" },
-	{ "id": "vitesse_doublement",   "name": "Overtaking Speed", "category": "Condition", "img": "tex_support_card_30043", "desc": "Gains speed when overtaking (+3, 5s, -3 endurance)" },
-	{ "id": "acceleration_t1",     "name": "Starting Accel",    "category": "Condition", "img": "tex_support_card_30076", "desc": "Acceleration from race start (+2, 5s, -2) — T1 only" },
-	{ "id": "leader_t3",           "name": "Leader's T3 Surge", "category": "Condition", "img": "tex_support_card_30265", "desc": "Gains speed and accel if 1st at T3 (+4, +3, 10s, -2 endurance)" },
-	{ "id": "last_place_t3",       "name": "Comeback Sprint",   "category": "Condition", "img": "tex_support_card_30256", "desc": "Gains speed and accel if 4th-6th at T3 (+5, +4, 10s, -2 endurance)" },
-	{ "id": "drafting_speed",      "name": "Drafting Burst",    "category": "Condition", "img": "tex_support_card_30057", "desc": "Gains speed when close behind a horse in same lane (+3, 4s, -1 endurance)" },
+	{ "id": "vitesse_active",      "name": "Speed",          "category": "Active",     "img": "tex_support_card_30011", "desc": SkillData.ACTIVE_SKILLS["speed_boost"].desc },
+	{ "id": "acceleration_active", "name": "Acceleration",     "category": "Active",     "img": "tex_support_card_30014", "desc": SkillData.ACTIVE_SKILLS["accel_boost"].desc },
+	{ "id": "endurance_active",    "name": "Endurance Recovery",  "category": "Active",     "img": "tex_support_card_30028", "desc": SkillData.ACTIVE_SKILLS["endurance_recovery"].desc },
+	{ "id": "vitesse_doublement",   "name": "Overtaking Speed", "category": "Condition", "img": "tex_support_card_30043", "desc": SkillData.ACTIVE_SKILLS["speed_while_overtaking"].desc },
+	{ "id": "acceleration_t1",     "name": "Starting Accel",    "category": "Condition", "img": "tex_support_card_30076", "desc": SkillData.ACTIVE_SKILLS["groundwork"].desc },
+	{ "id": "leader_t3",           "name": "Leader's T3 Surge", "category": "Condition", "img": "tex_support_card_30265", "desc": SkillData.ACTIVE_SKILLS["leader_t3_boost"].desc },
+	{ "id": "last_place_t3",       "name": "Comeback Sprint",   "category": "Condition", "img": "tex_support_card_30256", "desc": SkillData.ACTIVE_SKILLS["last_place_t3_boost"].desc },
+	{ "id": "drafting_speed",      "name": "Drafting Burst",    "category": "Condition", "img": "tex_support_card_30057", "desc": SkillData.ACTIVE_SKILLS["drafting_boost"].desc },
 ]
 
 var selected_character: Dictionary = {}

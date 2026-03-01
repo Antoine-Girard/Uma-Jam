@@ -14,20 +14,20 @@ const PHASE_LAST_SPURT := 2
 
 const ACTIVE_SKILLS: Dictionary = {
 	"speed_boost": {
-		"label":           "Speed Boost",
-		"short":           "VIT",
-		"icon":            "tex_support_card_30011",
-		"desc":            "Speed +12 for 4s, cost 2",
-		"speed_bonus":     12.0,
-		"accel_bonus":     0.0,
-		"recovery_bonus":  0.0,
-		"duration":        4.0,
-		"endurance_cost":  2.0,
-		"condition":       "",
+		"label": "Speed Boost",
+		"short": "VIT",
+		"icon": "tex_support_card_30011",
+		"desc": "Speed +12 for 4s, cost 2",
+		"speed_bonus": 12.0,
+		"accel_bonus": 0.0,
+		"recovery_bonus": 0.0,
+		"duration": 4.0,
+		"endurance_cost": 2.0,
+		"condition": "",
 	},
 	"accel_boost": {
-		"label":           "Accel Boost",
-		"short":           "ACC",
+		"label": "Accel Boost",
+		"short": "ACC",
 		"icon":            "tex_support_card_30014",
 		"desc":            "Accel +8 for 3s, cost 2",
 		"speed_bonus":     0.0,
@@ -112,12 +112,12 @@ const ACTIVE_SKILLS: Dictionary = {
 }
 
 const CHARACTER_PASSIVES: Dictionary = {
-	"tachyon":        { "label": "Endurance Rush",       "desc": "Gains speed when activating an endurance skill (+6 speed, 5s)" },
-	"el_condor_passa": { "label": "Last Spurt Condor",    "desc": "Gains acceleration in last spurt between 2nd and 4th (+2 accel, conditional permanent)" },
-	"gold_ship":       { "label": "Overtaking Rush",      "desc": "Gains speed when overtaking (+10 speed, 5s)" },
-	"maruzenski":      { "label": "Chasing Glory",        "desc": "Gains speed if not 1st (+9 speed permanent), but +1 endurance cost on all skills" },
-	"oguri_cap":       { "label": "Final Stretch",        "desc": "Speed and acceleration increased in last phase (+25 speed, +10 accel, conditional permanent)" },
-	"sakura":          { "label": "Mid-Race Surge",       "desc": "Gains speed while not in 1st place (+10 speed, constant)" },
-	"spe_chan":         { "label": "Underdog Sprint",      "desc": "Gains acceleration in last spurt between 4th and 6th (+3 accel, conditional permanent)" },
-	"rudolf":          { "label": "Pressure from Behind", "desc": "Gains speed when a horse is directly ahead in the same lane (+13 speed, 1s)" },
+	"tachyon":         { "name": "Agnes Tachyon",    "label": "Endurance Rush",        "type": "Endurance", "desc": "Gains speed when activating an endurance skill (+6 speed, 5s)" },
+	"el_condor_passa": { "name": "El Condor Pasa",   "label": "Last Spurt Condor",     "type": "Power",     "desc": "Gains acceleration in last spurt between 2nd and 4th (+2 accel, conditional permanent)" },
+	"gold_ship":       { "name": "Gold Ship",        "label": "Overtaking Rush",       "type": "Overtake",  "desc": "Gains speed when overtaking (+10 speed, 5s)" },
+	"maruzenski":      { "name": "Maruzensky",       "label": "Chasing Glory",         "type": "Speed",     "desc": "Gains speed if not 1st (+9 speed permanent), but +1 endurance cost on all skills" },
+	"oguri_cap":       { "name": "Oguri Cap",        "label": "Final Stretch",         "type": "All in",    "desc": "Speed and acceleration increased in last phase (+25 speed, +10 accel, conditional permanent)" },
+	"sakura":          { "name": "Sakura Bakushin O","label": "Mid-Race Surge",        "type": "Speed",     "desc": "Gains speed while not in 1st place (+10 speed, constant)" },
+	"spe_chan":         { "name": "Special Week",     "label": "Underdog Sprint",       "type": "Power",     "desc": "Gains acceleration in last spurt between 4th and 6th (+3 accel, conditional permanent)" },
+	"rudolf":          { "name": "Symboli Rudolf",   "label": "Pressure from Behind",  "type": "Speed",     "desc": "Gains speed when a horse is directly ahead in the same lane (+13 speed, 1s)" },
 }
