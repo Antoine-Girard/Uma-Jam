@@ -4,6 +4,7 @@ func _ready():
 	print("[MainMenu] Main menu loaded")
 	$BottomBar/BuildButton.pressed.connect(_on_build_pressed)
 	$BottomBar/ProfileButton.pressed.connect(_on_profile_pressed)
+	$BottomBar/TutorialButton.pressed.connect(_on_tutorial_pressed)
 	$MatchmakingBtn.pressed.connect(_on_matchmaking_pressed)
 	$TopLeft/RaceBtn.pressed.connect(_on_race_pressed)
 	$TopRight/QuitBtn.pressed.connect(_on_quit_pressed)
@@ -25,6 +26,10 @@ func _on_race_pressed():
 func _on_profile_pressed():
 	print("[MainMenu] Click on PROFILE")
 	GameManager.go_to_profile()
+
+func _on_tutorial_pressed():
+	print("[MainMenu] Click on TUTORIAL")
+	GameManager.go_to_tutorial()
 
 func _on_matchmaking_pressed():
 	if not _check_build_ready():

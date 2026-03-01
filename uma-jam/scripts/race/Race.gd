@@ -1,6 +1,6 @@
 extends Node2D
 
-const LAPS := 3
+const LAPS := 5
 const SKIP_SPEED_MULT := 12.0
 const BASE_MAX_SPEED := 55.0
 const BASE_ACCEL := 5.5
@@ -59,6 +59,10 @@ const SYNC_INTERVAL: float           = 0.2
 
 var _pause_overlay: Control          = null
 var _paused: bool                    = false
+
+# Bot lane change AI
+var _bot_lane_timers: Dictionary     = {}  # horse -> float cooldown
+const BOT_LANE_CHECK_INTERVAL: float = 0.8
 
 func _ready() -> void:
 	_inner_btn.pressed.connect(_on_inner)
@@ -180,24 +184,31 @@ func _make_player_card(horse: HorseRacer) -> PanelContainer:
 	hbox.alignment = BoxContainer.ALIGNMENT_BEGIN
 	panel.add_child(hbox)
 
-	var img_frame := PanelContainer.new()
-	var img_style := StyleBoxFlat.new()
-	img_style.bg_color = horse_color.darkened(0.2)
-	img_style.corner_radius_top_left = 6
-	img_style.corner_radius_top_right = 6
-	img_style.corner_radius_bottom_right = 6
-	img_style.corner_radius_bottom_left = 6
-	img_frame.add_theme_stylebox_override("panel", img_style)
-	img_frame.custom_minimum_size = Vector2(36, 36)
-	hbox.add_child(img_frame)
+	# Portrait du personnage
+	var icon_id: String = GameData.CHAR_ID_TO_ICON.get(horse.char_id, "")
+	var portrait_tex := load("res://assets/characters/%s.png" % icon_id) as Texture2D if icon_id != "" else null
 
-	var img_label := Label.new()
-	img_label.text = "?"
-	img_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	img_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	img_label.add_theme_font_size_override("font_size", 20)
-	img_label.add_theme_color_override("font_color", Color.WHITE)
-	img_frame.add_child(img_label)
+	if portrait_tex:
+		var tex_rect := TextureRect.new()
+		tex_rect.texture = portrait_tex
+		tex_rect.custom_minimum_size = Vector2(42, 42)
+		tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tex_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		hbox.add_child(tex_rect)
+	else:
+		var img_frame := PanelContainer.new()
+		var img_style := StyleBoxFlat.new()
+		img_style.bg_color = horse_color.darkened(0.2)
+		img_style.set_corner_radius_all(6)
+		img_frame.add_theme_stylebox_override("panel", img_style)
+		img_frame.custom_minimum_size = Vector2(42, 42)
+		hbox.add_child(img_frame)
+		var img_label := Label.new()
+		img_label.text = "?"
+		img_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		img_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		img_label.add_theme_font_size_override("font_size", 20)
+		img_frame.add_child(img_label)
 
 	var name_label := Label.new()
 	name_label.text = horse.horse_name
@@ -272,13 +283,18 @@ func _spawn_horses() -> void:
 		var players: Dictionary = NetworkManager.players_connected
 		var i := 0
 		for pid in players.keys():
-			var pname: String = players[pid].get("name", "P%d" % (i + 1))
+			var pdata: Dictionary = players[pid]
+			var pname: String = pdata.get("name", "P%d" % (i + 1))
 			var is_me: bool = (pid == NetworkManager.my_player_id)
-			var cid: String = player_char_id if is_me else BOT_CHAR_IDS[i % BOT_CHAR_IDS.size()]
+			# Use the player's chosen character, fallback to a bot character
+			var cid: String = player_char_id if is_me else pdata.get("character_id", BOT_CHAR_IDS[i % BOT_CHAR_IDS.size()])
 			var horse := _make_horse(i, pname, cid, is_me)
 			_player_horses[pid] = horse
 			if is_me:
 				_my_horse = horse
+			else:
+				# Remote players: don't simulate locally, rely on network updates
+				horse.is_remote = true
 			i += 1
 
 		var bot_names := ["Sakura", "Hana", "Kaze", "Tsuki", "Hoshi"]
@@ -296,12 +312,17 @@ func _spawn_horses() -> void:
 			var bot_cid: String = BOT_CHAR_IDS[(b + 1) % BOT_CHAR_IDS.size()]
 			_make_horse(b + 1, bot_names[b] + " (bot)", bot_cid, false)
 
+	# Give every horse a reference to all horses for blocking checks
+	for h: HorseRacer in _horses:
+		h.all_horses = _horses
+
 func _make_horse(lane: int, pname: String, char_id: String = "", is_local: bool = false) -> HorseRacer:
 	var horse := HorseRacer.new()
 	horse.track        = _track
 	horse.lane_idx     = lane
 	horse.color_idx    = lane
 	horse.horse_name   = pname
+	horse.char_id      = char_id
 	horse.progress     = 0.0
 	horse.current_speed = 0.0
 	horse.max_speed    = BASE_MAX_SPEED
@@ -320,6 +341,15 @@ func _make_horse(lane: int, pname: String, char_id: String = "", is_local: bool 
 
 func _init_skill_manager(sm: SkillManager, horse: HorseRacer, char_id: String, is_local: bool) -> void:
 	sm.init(horse, self, _horses, char_id, is_local)
+	# Si c'est un bot (pas local et pas un joueur online), lui donner une IA
+	if not is_local and not _player_horses.values().has(horse):
+		var all_skill_ids := SkillData.ACTIVE_SKILLS.keys()
+		var bot_deck: Array = []
+		var shuffled := all_skill_ids.duplicate()
+		shuffled.shuffle()
+		for j in mini(5, shuffled.size()):
+			bot_deck.append(shuffled[j])
+		sm.init_bot(bot_deck)
 
 func _on_inner() -> void:
 	if _my_horse and not _my_finished and _race_started:
@@ -373,10 +403,11 @@ func _on_menu() -> void:
 func _on_remote_lane_change(player_id: String, direction: String) -> void:
 	if player_id in _player_horses:
 		var horse: HorseRacer = _player_horses[player_id]
-		if direction == "inner":
-			horse.move_inner()
-		elif direction == "outer":
-			horse.move_outer()
+		# Remote players bypass blocking checks — their client is authoritative
+		if direction == "inner" and horse.lane_idx > 0:
+			horse._switch_lane(horse.lane_idx - 1)
+		elif direction == "outer" and horse.lane_idx < 5:
+			horse._switch_lane(horse.lane_idx + 1)
 
 func _on_remote_position_update(player_id: String, progress_val: float, laps: int, lane: int, speed: float) -> void:
 	if player_id in _player_horses:
@@ -397,6 +428,45 @@ func _on_remote_player_left(player_id: String) -> void:
 	if player_id in _player_horses:
 		print("[Race] Player %s disconnected, their horse continues as bot" % player_id)
 		_player_horses.erase(player_id)
+
+func _update_bot_lanes(delta: float) -> void:
+	if not _race_started:
+		return
+	for h: HorseRacer in _horses:
+		if h.skill_manager == null or not h.skill_manager.is_bot:
+			continue
+		if _finish_order.has(h):
+			continue
+
+		# Cooldown per bot (initial delay of 2s so bots don't move at GO)
+		var cd: float = _bot_lane_timers.get(h, 2.0)
+		cd -= delta
+		if cd > 0.0:
+			_bot_lane_timers[h] = cd
+			continue
+
+		# Strategy: if blocked, try to change to an adjacent lane to overtake
+		if h.is_blocked:
+			# Try inner first (faster in turns), then outer
+			var moved := false
+			if h.lane_idx > 0 and not h.is_lane_blocked_by_neighbor(h.lane_idx - 1):
+				h.move_inner()
+				moved = true
+			elif h.lane_idx < 5 and not h.is_lane_blocked_by_neighbor(h.lane_idx + 1):
+				h.move_outer()
+				moved = true
+			if moved:
+				_bot_lane_timers[h] = randf_range(0.6, 1.5)
+				continue
+
+		# If not blocked and not on inner lane, try to move inner for speed advantage
+		if not h.is_blocked and h.lane_idx > 0:
+			if not h.is_lane_blocked_by_neighbor(h.lane_idx - 1):
+				h.move_inner()
+				_bot_lane_timers[h] = randf_range(1.0, 2.5)
+				continue
+
+		_bot_lane_timers[h] = BOT_LANE_CHECK_INTERVAL
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and _race_started and not _race_over:
@@ -424,6 +494,7 @@ func _process(delta: float) -> void:
 	for h: HorseRacer in _horses:
 		if h.skill_manager != null:
 			h.skill_manager.update(delta)
+	_update_bot_lanes(delta)
 	_check_finishers()
 	_update_ui()
 	_update_endurance_ui()
@@ -442,18 +513,42 @@ func _process(delta: float) -> void:
 
 func _check_finishers() -> void:
 	for h: HorseRacer in _horses:
-		if h.laps_completed >= LAPS and not _finish_order.has(h):
-			_finish_order.append(h)
-			h.set_process(false)
-			print("[Race] %s finished %s (%d/%d)" % [
-				h.horse_name, _ordinal(_finish_order.size()),
-				_finish_order.size(), _horses.size()])
+		if _finish_order.has(h):
+			continue
+		# Finish = 3 full laps + end of bottom straight (finish line on the right)
+		var finish_prog: float = _track.get_finish_progress(h.lane_idx)
+		var finished := false
+		if h.laps_completed > LAPS:
+			# Way past — definitely finished
+			finished = true
+		elif h.laps_completed == LAPS and h.progress >= finish_prog:
+			# Completed all laps and crossed the finish line at end of bottom straight
+			finished = true
 
-			if h == _my_horse and not _my_finished:
-				_my_finished = true
-				_lane_btns.visible = false
-				if _skill_panel:
-					_skill_panel.visible = false
+		if not finished:
+			continue
+
+		_finish_order.append(h)
+		h.set_process(false)
+		h.is_blocked = false
+		h.blocked_by = null
+		var rank := _finish_order.size()
+		print("[Race] %s finished %s (%d/%d)" % [
+			h.horse_name, _ordinal(rank), rank, _horses.size()])
+
+		# Place finished horse at the finish line, each on its own lane
+		h.lane_idx = rank - 1
+		h.laps_completed = LAPS
+		var target_finish: float = _track.get_finish_progress(h.lane_idx)
+		h.progress = target_finish
+		h.position = _track.get_horse_pos(h.lane_idx, h.progress)
+		h.rotation = 0.0  # Face right on the straight
+
+		if h == _my_horse and not _my_finished:
+			_my_finished = true
+			_lane_btns.visible = false
+			if _skill_panel:
+				_skill_panel.visible = false
 
 	if _finish_order.size() >= _horses.size():
 		_race_over = true
@@ -478,10 +573,12 @@ func _update_ui() -> void:
 
 	if not _my_finished:
 		_lane_num.text = str(_my_horse.lane_idx + 1)
-		_inner_btn.disabled = _my_horse.lane_idx <= 0
-		_outer_btn.disabled = _my_horse.lane_idx >= 5
-		_inner_btn.modulate.a = 0.4 if _inner_btn.disabled else 1.0
-		_outer_btn.modulate.a = 0.4 if _outer_btn.disabled else 1.0
+		var inner_blocked := _my_horse.lane_idx <= 0 or _my_horse.is_lane_blocked_by_neighbor(_my_horse.lane_idx - 1)
+		var outer_blocked := _my_horse.lane_idx >= 5 or _my_horse.is_lane_blocked_by_neighbor(_my_horse.lane_idx + 1)
+		_inner_btn.disabled = inner_blocked
+		_outer_btn.disabled = outer_blocked
+		_inner_btn.modulate.a = 0.4 if inner_blocked else 1.0
+		_outer_btn.modulate.a = 0.4 if outer_blocked else 1.0
 
 func _get_rank(horse: HorseRacer) -> int:
 	var idx := _finish_order.find(horse)
@@ -528,10 +625,10 @@ func _build_skill_ui() -> void:
 	_skill_panel.anchor_right = 1.0
 	_skill_panel.anchor_top = 1.0
 	_skill_panel.anchor_bottom = 1.0
-	_skill_panel.offset_top = -150.0
-	_skill_panel.offset_bottom = -10.0
-	_skill_panel.offset_left = 10.0
-	_skill_panel.offset_right = -10.0
+	_skill_panel.offset_top = -130.0
+	_skill_panel.offset_bottom = -8.0
+	_skill_panel.offset_left = 200.0
+	_skill_panel.offset_right = -200.0
 
 	var vbox := VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 4)
@@ -571,8 +668,9 @@ func _build_skill_ui() -> void:
 	_endurance_label.custom_minimum_size = Vector2(55, 0)
 	endurance_hbox.add_child(_endurance_label)
 
+	# Boutons de skills - design compact
 	var btn_hbox := HBoxContainer.new()
-	btn_hbox.add_theme_constant_override("separation", 6)
+	btn_hbox.add_theme_constant_override("separation", 8)
 	btn_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	vbox.add_child(btn_hbox)
 
@@ -583,59 +681,60 @@ func _build_skill_ui() -> void:
 			continue
 		var def: Dictionary = SkillData.ACTIVE_SKILLS[skill_id]
 
+		# Bouton carré compact
 		var btn := Button.new()
-		btn.custom_minimum_size = Vector2(0, 70)
-		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.custom_minimum_size = Vector2(80, 80)
+		btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 
-		var btn_style := StyleBoxFlat.new()
-		btn_style.bg_color = Color(0.12, 0.2, 0.4, 0.9)
-		btn_style.set_corner_radius_all(8)
-		btn_style.border_color = Color(0.4, 0.6, 1.0, 0.5)
-		btn_style.set_border_width_all(1)
-		btn_style.content_margin_left = 4.0
-		btn_style.content_margin_right = 4.0
-		btn_style.content_margin_top = 4.0
-		btn_style.content_margin_bottom = 4.0
-		btn.add_theme_stylebox_override("normal", btn_style)
+		# Styles
+		var _make_style := func(bg: Color, border: Color) -> StyleBoxFlat:
+			var s := StyleBoxFlat.new()
+			s.bg_color = bg
+			s.set_corner_radius_all(10)
+			s.border_color = border
+			s.set_border_width_all(2)
+			s.content_margin_left = 2.0
+			s.content_margin_right = 2.0
+			s.content_margin_top = 2.0
+			s.content_margin_bottom = 2.0
+			return s
 
-		var btn_hover := btn_style.duplicate()
-		btn_hover.bg_color = Color(0.18, 0.3, 0.55, 0.95)
-		btn_hover.border_color = Color(0.5, 0.7, 1.0, 0.8)
-		btn.add_theme_stylebox_override("hover", btn_hover)
+		btn.add_theme_stylebox_override("normal", _make_style.call(
+			Color(0.1, 0.15, 0.3, 0.9), Color(0.35, 0.5, 0.85, 0.6)))
+		btn.add_theme_stylebox_override("hover", _make_style.call(
+			Color(0.15, 0.22, 0.45, 0.95), Color(0.5, 0.7, 1.0, 0.9)))
+		btn.add_theme_stylebox_override("pressed", _make_style.call(
+			Color(0.06, 0.08, 0.2, 0.95), Color(0.3, 0.4, 0.7, 0.8)))
+		btn.add_theme_stylebox_override("disabled", _make_style.call(
+			Color(0.08, 0.08, 0.12, 0.5), Color(0.2, 0.2, 0.25, 0.3)))
 
-		var btn_pressed := btn_style.duplicate()
-		btn_pressed.bg_color = Color(0.08, 0.12, 0.28, 0.9)
-		btn.add_theme_stylebox_override("pressed", btn_pressed)
-
-		var btn_disabled := btn_style.duplicate()
-		btn_disabled.bg_color = Color(0.1, 0.1, 0.15, 0.5)
-		btn_disabled.border_color = Color(0.3, 0.3, 0.4, 0.3)
-		btn.add_theme_stylebox_override("disabled", btn_disabled)
-
+		# Contenu: icône centrée
 		var btn_content := VBoxContainer.new()
 		btn_content.alignment = BoxContainer.ALIGNMENT_CENTER
-		btn_content.add_theme_constant_override("separation", 2)
+		btn_content.add_theme_constant_override("separation", 1)
 		btn_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		btn.add_child(btn_content)
 
+		# Icône de la carte (plus grande)
 		var icon_path := "res://assets/cards/%s.png" % def.get("icon", "")
 		var tex := load(icon_path) as Texture2D
 		if tex:
 			var icon := TextureRect.new()
 			icon.texture = tex
-			icon.custom_minimum_size = Vector2(36, 36)
+			icon.custom_minimum_size = Vector2(50, 50)
 			icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 			icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 			icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			btn_content.add_child(icon)
 
-		var short_label := Label.new()
-		short_label.text = "%s  -%d" % [def.get("short", "?"), int(def["endurance_cost"])]
-		short_label.add_theme_font_size_override("font_size", 11)
-		short_label.add_theme_color_override("font_color", Color(0.8, 0.85, 1.0))
-		short_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		short_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		btn_content.add_child(short_label)
+		# Nom court + coût en bas
+		var info_label := Label.new()
+		info_label.text = "%s  -%d" % [def.get("short", "?"), int(def["endurance_cost"])]
+		info_label.add_theme_font_size_override("font_size", 11)
+		info_label.add_theme_color_override("font_color", Color(0.8, 0.9, 1.0))
+		info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		info_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		btn_content.add_child(info_label)
 
 		btn.pressed.connect(_on_skill_button.bind(skill_id))
 		btn.mouse_entered.connect(_on_skill_hover_start.bind(btn, skill_id))
@@ -697,9 +796,7 @@ func _on_skill_hover_start(btn: Button, skill_id: String) -> void:
 	if not SkillData.ACTIVE_SKILLS.has(skill_id):
 		return
 	var def: Dictionary = SkillData.ACTIVE_SKILLS[skill_id]
-	var text := "%s\n%s\nDuration: %.0fs | Cost: -%d endurance" % [
-		def["label"], def.get("desc", ""), def["duration"], int(def["endurance_cost"])]
-	_tooltip_label.text = text
+	_tooltip_label.text = "%s — %s" % [def["label"], def.get("desc", "")]
 
 func _on_skill_hover_end() -> void:
 	_tooltip_btn = null
@@ -813,10 +910,21 @@ func _update_endurance_ui() -> void:
 		if i < _skill_ids_ordered.size():
 			var sid: String = _skill_ids_ordered[i]
 			if SkillData.ACTIVE_SKILLS.has(sid):
-				var cost: float = SkillData.ACTIVE_SKILLS[sid]["endurance_cost"]
+				var def: Dictionary = SkillData.ACTIVE_SKILLS[sid]
+				var cost: float = def["endurance_cost"]
 				if sm.character_id == "maruzenski":
 					cost += 1.0
-				btn.disabled = end_val < cost
+				# Check condition
+				var condition_met := sm.check_skill_condition(def["condition"])
+				var enough_endurance := end_val >= cost
+				btn.disabled = not enough_endurance or not condition_met
+				# Dim the button more if condition is not met
+				if not condition_met:
+					btn.modulate.a = 0.35
+				elif not enough_endurance:
+					btn.modulate.a = 0.5
+				else:
+					btn.modulate.a = 1.0
 
 func _build_pause_menu() -> void:
 	_pause_overlay = Control.new()

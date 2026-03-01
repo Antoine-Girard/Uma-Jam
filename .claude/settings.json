@@ -32,7 +32,15 @@
       "Bash(git mv uma-jam/scripts/Matchmaking.gd.uid uma-jam/scripts/lobby/Matchmaking.gd.uid)",
       "Bash(git rm uma-jam/scenes/lobby/Lobby.tscn uma-jam/scenes/lobby/uma_player.tscn uma-jam/scripts/Lobby.gd uma-jam/scripts/Lobby.gd.uid)",
       "Bash(git rm ARCHITECTURE_MULTIJOUEUR.md DIAGRAMMES.md GUIDE_TEST_RAPIDE.md README_MULTIJOUEUR.md)",
-      "Bash(git rm uma-jam/assets/characters/desktop.ini)"
+      "Bash(git rm uma-jam/assets/characters/desktop.ini)",
+      "Read(//tmp/**)",
+      "Bash(python3 -c \"import zipfile; z=zipfile.ZipFile\\(''RacingSansOne.zip''\\); z.extractall\\(''RacingSansOne''\\); print\\(z.namelist\\(\\)\\)\")",
+      "Bash(powershell -Command \"Expand-Archive -Path ''C:\\\\tmp\\\\RacingSansOne.zip'' -DestinationPath ''C:\\\\tmp\\\\RacingSansOne'' -Force; Get-ChildItem ''C:\\\\tmp\\\\RacingSansOne'' -Recurse -Name\")",
+      "Bash(powershell -Command \"Expand-Archive -LiteralPath ''\\\\?\\\\C:\\\\Users\\\\arthu\\\\AppData\\\\Local\\\\Temp\\\\RacingSansOne.zip'' -DestinationPath ''C:\\\\Users\\\\arthu\\\\AppData\\\\Local\\\\Temp\\\\RacingSansOne'' -Force; Get-ChildItem ''C:\\\\Users\\\\arthu\\\\AppData\\\\Local\\\\Temp\\\\RacingSansOne'' -Recurse -Name\")",
+      "Bash(curl -L -o \"c:/Users/arthu/Documents/GitHub/Uma-Jam/uma-jam/assets/fonts/RacingSansOne-Regular.ttf\" \"https://github.com/google/fonts/raw/main/ofl/racingsansone/RacingSansOne-Regular.ttf\")"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
     ]
   }
 }
