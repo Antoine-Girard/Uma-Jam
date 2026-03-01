@@ -338,6 +338,9 @@ func _check_skill_condition(condition: String) -> bool:
 		"":           return true
 		"overtaking": return _passive_state.get("overtaking", false)
 		"phase_t1":   return _get_race_phase() == SkillData.PHASE_T1
+		"first_at_t3": return _get_race_phase() == SkillData.PHASE_LAST_SPURT and _get_my_rank() == 1
+		"last_at_t3":  return _get_race_phase() == SkillData.PHASE_LAST_SPURT and _get_my_rank() == all_horses.size()
+		"not_first":   return _get_my_rank() > 1
 		_:            return true
 
 func _get_my_rank() -> int:
