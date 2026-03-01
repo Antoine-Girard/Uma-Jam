@@ -10,6 +10,9 @@ const HORSE_COLORS := [
 	Color(0.10, 0.80, 0.80),
 ]
 
+const HITBOX_HALF_W := 18.0
+const HITBOX_HALF_H := 14.0
+
 var track: Node2D      = null
 var lane_idx: int      = 0
 var progress: float    = 0.0
@@ -25,15 +28,16 @@ var skill_manager: SkillManager = null
 var all_horses: Array  = []
 var is_blocked: bool   = false
 var blocked_by: Node2D = null
-var is_remote: bool    = false  # Remote player: position controlled by network updates only
+var is_remote: bool    = false
+var finished: bool     = false
 
-const BLOCK_DIST_PX := 44.0
+var _hitbox_area: Area2D = null
+var _overlapping: Array  = []
 
 var _label: Label
 var _sprite: Sprite2D
 
 func _ready() -> void:
-	# Label du nom au-dessus
 	_label = Label.new()
 	_label.text = horse_name
 	_label.position = Vector2(-28.0, -38.0)
@@ -43,32 +47,60 @@ func _ready() -> void:
 	_label.add_theme_constant_override("outline_size", 3)
 	add_child(_label)
 
-	# Portrait du personnage
 	_sprite = Sprite2D.new()
 	var icon_id: String = GameData.CHAR_ID_TO_ICON.get(char_id, "")
 	if icon_id != "":
 		var tex := load("res://assets/characters/%s.png" % icon_id) as Texture2D
 		if tex:
 			_sprite.texture = tex
-			# Redimensionner pour que le portrait fasse ~32x32
 			var tex_size := tex.get_size()
 			_sprite.scale = Vector2(32.0 / tex_size.x, 32.0 / tex_size.y)
 	_sprite.position = Vector2.ZERO
 	add_child(_sprite)
 
-	# Bordure colorée autour du portrait
+	_setup_hitbox()
 	queue_redraw()
 
-	# Set initial position so blocking checks work before first _process
 	if track:
 		position = track.get_horse_pos(lane_idx, progress)
 		rotation = track.get_horse_rot(lane_idx, progress)
+
+func _setup_hitbox() -> void:
+	_hitbox_area = Area2D.new()
+	_hitbox_area.name = "Hitbox"
+	_hitbox_area.collision_layer = 1
+	_hitbox_area.collision_mask = 1
+	_hitbox_area.monitorable = true
+	_hitbox_area.monitoring = true
+
+	var shape := CollisionShape2D.new()
+	var rect := RectangleShape2D.new()
+	rect.size = Vector2(HITBOX_HALF_W * 2.0, HITBOX_HALF_H * 2.0)
+	shape.shape = rect
+	_hitbox_area.add_child(shape)
+	add_child(_hitbox_area)
+
+	_hitbox_area.area_entered.connect(_on_area_entered)
+	_hitbox_area.area_exited.connect(_on_area_exited)
+
+func _on_area_entered(other_area: Area2D) -> void:
+	var other_horse := other_area.get_parent()
+	if other_horse is HorseRacer and other_horse != self:
+		if other_horse not in _overlapping:
+			_overlapping.append(other_horse)
+
+func _on_area_exited(other_area: Area2D) -> void:
+	var other_horse := other_area.get_parent()
+	if other_horse is HorseRacer:
+		_overlapping.erase(other_horse)
+
+func get_score() -> float:
+	return float(laps_completed) + progress
 
 func _process(delta: float) -> void:
 	if track == null:
 		return
 
-	# Remote players: simple prediction using last known speed, no blocking logic
 	if is_remote:
 		var lane_length: float = track.get_lane_length(lane_idx)
 		if current_speed > 0.0 and lane_length > 0.0:
@@ -88,7 +120,6 @@ func _process(delta: float) -> void:
 		effective_max = max_speed + (speed_bonus / SkillData.BASE_SPEED) * max_speed
 		effective_accel = acceleration + (accel_bonus / SkillData.BASE_ACCEL) * acceleration
 
-	_update_blocking()
 	if is_blocked and blocked_by != null:
 		var blocker_speed: float = blocked_by.current_speed
 		effective_max = minf(effective_max, blocker_speed)
@@ -105,8 +136,6 @@ func _process(delta: float) -> void:
 	var lane_length: float = track.get_lane_length(lane_idx)
 	progress += (current_speed * delta) / lane_length
 
-	_clamp_to_nearest_ahead()
-
 	while progress >= 1.0:
 		progress -= 1.0
 		laps_completed += 1
@@ -114,96 +143,72 @@ func _process(delta: float) -> void:
 	position = track.get_horse_pos(lane_idx, progress)
 	rotation = track.get_horse_rot(lane_idx, progress)
 
-func _get_min_gap() -> float:
-	if track == null:
-		return 0.025
-	var lane_len: float = track.get_lane_length(lane_idx)
-	return BLOCK_DIST_PX / lane_len if lane_len > 0.0 else 0.025
-
-func _update_blocking() -> void:
+func resolve_collisions() -> void:
 	is_blocked = false
 	blocked_by = null
-	var my_score: float = float(laps_completed) + progress
-	var min_gap: float = _get_min_gap()
-	var nearest_gap: float = INF
-	for h in all_horses:
-		if h == self:
-			continue
-		if h.lane_idx != lane_idx:
-			continue
-		if not h.is_processing() and not h.is_remote:
-			continue
-		var h_score: float = float(h.laps_completed) + h.progress
-		var gap: float = h_score - my_score
-		if gap <= 0.0 or gap > 0.5:
-			continue
-		if gap < nearest_gap:
-			nearest_gap = gap
-			blocked_by = h
-	if blocked_by != null and nearest_gap < min_gap:
-		is_blocked = true
-	else:
-		blocked_by = null
+	if finished or is_remote:
+		return
 
-func _clamp_to_nearest_ahead() -> void:
-	var my_score: float = float(laps_completed) + progress
-	var min_gap: float = _get_min_gap()
-	var nearest: Node2D = null
-	var nearest_gap: float = INF
-	for h in all_horses:
-		if h == self:
+	var my_score: float = get_score()
+
+	for other in _overlapping:
+		var h: HorseRacer = other as HorseRacer
+		if h == null or h == self:
 			continue
+		if h.finished:
+			continue
+
+		var h_score: float = h.get_score()
+		if h_score <= my_score:
+			continue
+
 		if h.lane_idx != lane_idx:
 			continue
-		if not h.is_processing() and not h.is_remote:
-			continue
-		var h_score: float = float(h.laps_completed) + h.progress
-		var gap: float = h_score - my_score
-		if gap > 0.0 and gap < nearest_gap:
-			nearest_gap = gap
-			nearest = h
-	if nearest != null and nearest_gap < min_gap:
-		var blocker_score: float = float(nearest.laps_completed) + nearest.progress
-		var max_score: float = blocker_score - min_gap
-		if max_score < 0.0:
-			max_score = 0.0
-		if my_score > max_score:
-			laps_completed = int(max_score)
-			progress = max_score - float(laps_completed)
+
+		is_blocked = true
+		if blocked_by == null or h_score < (blocked_by as HorseRacer).get_score():
+			blocked_by = h
+
+	if is_blocked and blocked_by != null:
+		var blocker: HorseRacer = blocked_by as HorseRacer
+		if current_speed > blocker.current_speed:
+			current_speed = blocker.current_speed
+
+		var safe_score: float = blocker.get_score() - 0.002
+		if safe_score < 0.0:
+			safe_score = 0.0
+		if my_score > safe_score:
+			laps_completed = int(safe_score)
+			progress = safe_score - float(laps_completed)
 			if progress < 0.0:
 				progress = 0.0
-			current_speed = minf(current_speed, nearest.current_speed)
-		is_blocked = true
-		blocked_by = nearest
 
-func is_lane_blocked_by_neighbor(target_lane: int) -> bool:
+		position = track.get_horse_pos(lane_idx, progress)
+		rotation = track.get_horse_rot(lane_idx, progress)
+
+func is_lane_blocked_ahead(target_lane: int) -> bool:
 	if track == null:
 		return false
-	var target_progress: float = track.convert_progress(lane_idx, target_lane, progress)
-	var my_target_score: float = float(laps_completed) + target_progress
-	var target_lane_len: float = track.get_lane_length(target_lane)
-	var min_gap: float = BLOCK_DIST_PX / target_lane_len if target_lane_len > 0.0 else 0.025
+	var target_pos: Vector2 = track.get_horse_pos(target_lane,
+		track.convert_progress(lane_idx, target_lane, progress))
 	for h in all_horses:
-		if h == self:
+		if h == self or h.finished:
 			continue
 		if h.lane_idx != target_lane:
 			continue
-		if not h.is_processing() and not h.is_remote:
-			continue
-		var h_score: float = float(h.laps_completed) + h.progress
-		if absf(h_score - my_target_score) < min_gap:
+		var dist: float = target_pos.distance_to(h.position)
+		if dist < (HITBOX_HALF_W + HITBOX_HALF_H) * 1.2:
 			return true
 	return false
 
 func _draw() -> void:
 	var c: Color = HORSE_COLORS[color_idx % HORSE_COLORS.size()]
-	# Bordure colorée autour du portrait
 	draw_rect(Rect2(-18.0, -18.0, 36.0, 36.0), c, false, 2.5)
 
 func move_inner() -> bool:
 	if lane_idx <= 0:
 		return false
-	if is_lane_blocked_by_neighbor(lane_idx - 1):
+	if is_lane_blocked_ahead(lane_idx - 1):
 		return false
 	_switch_lane(lane_idx - 1)
 	return true
@@ -211,12 +216,11 @@ func move_inner() -> bool:
 func move_outer() -> bool:
 	if lane_idx >= 5:
 		return false
-	if is_lane_blocked_by_neighbor(lane_idx + 1):
+	if is_lane_blocked_ahead(lane_idx + 1):
 		return false
 	_switch_lane(lane_idx + 1)
 	return true
 
 func _switch_lane(new_lane: int) -> void:
-	# Convert progress segment by segment to preserve perpendicular position
 	progress = track.convert_progress(lane_idx, new_lane, progress)
 	lane_idx = new_lane

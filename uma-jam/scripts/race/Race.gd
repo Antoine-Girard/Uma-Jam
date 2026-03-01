@@ -447,21 +447,19 @@ func _update_bot_lanes(delta: float) -> void:
 
 		# Strategy: if blocked, try to change to an adjacent lane to overtake
 		if h.is_blocked:
-			# Try inner first (faster in turns), then outer
 			var moved := false
-			if h.lane_idx > 0 and not h.is_lane_blocked_by_neighbor(h.lane_idx - 1):
+			if h.lane_idx > 0 and not h.is_lane_blocked_ahead(h.lane_idx - 1):
 				h.move_inner()
 				moved = true
-			elif h.lane_idx < 5 and not h.is_lane_blocked_by_neighbor(h.lane_idx + 1):
+			elif h.lane_idx < 5 and not h.is_lane_blocked_ahead(h.lane_idx + 1):
 				h.move_outer()
 				moved = true
 			if moved:
 				_bot_lane_timers[h] = randf_range(0.6, 1.5)
 				continue
 
-		# If not blocked and not on inner lane, try to move inner for speed advantage
 		if not h.is_blocked and h.lane_idx > 0:
-			if not h.is_lane_blocked_by_neighbor(h.lane_idx - 1):
+			if not h.is_lane_blocked_ahead(h.lane_idx - 1):
 				h.move_inner()
 				_bot_lane_timers[h] = randf_range(1.0, 2.5)
 				continue
@@ -495,6 +493,7 @@ func _process(delta: float) -> void:
 		if h.skill_manager != null:
 			h.skill_manager.update(delta)
 	_update_bot_lanes(delta)
+	_resolve_all_collisions()
 	_check_finishers()
 	_update_ui()
 	_update_endurance_ui()
@@ -511,11 +510,15 @@ func _process(delta: float) -> void:
 				_my_horse.current_speed
 			)
 
+func _resolve_all_collisions() -> void:
+	for h: HorseRacer in _horses:
+		h.resolve_collisions()
+
 func _check_finishers() -> void:
 	for h: HorseRacer in _horses:
 		if _finish_order.has(h):
 			continue
-		# Finish = 3 full laps + end of bottom straight (finish line on the right)
+		# Finish = 5 full laps + end of bottom straight (finish line on the right)
 		var finish_prog: float = _track.get_finish_progress(h.lane_idx)
 		var finished := false
 		if h.laps_completed > LAPS:
@@ -530,6 +533,7 @@ func _check_finishers() -> void:
 
 		_finish_order.append(h)
 		h.set_process(false)
+		h.finished = true
 		h.is_blocked = false
 		h.blocked_by = null
 		var rank := _finish_order.size()
@@ -573,8 +577,8 @@ func _update_ui() -> void:
 
 	if not _my_finished:
 		_lane_num.text = str(_my_horse.lane_idx + 1)
-		var inner_blocked := _my_horse.lane_idx <= 0 or _my_horse.is_lane_blocked_by_neighbor(_my_horse.lane_idx - 1)
-		var outer_blocked := _my_horse.lane_idx >= 5 or _my_horse.is_lane_blocked_by_neighbor(_my_horse.lane_idx + 1)
+		var inner_blocked := _my_horse.lane_idx <= 0 or _my_horse.is_lane_blocked_ahead(_my_horse.lane_idx - 1)
+		var outer_blocked := _my_horse.lane_idx >= 5 or _my_horse.is_lane_blocked_ahead(_my_horse.lane_idx + 1)
 		_inner_btn.disabled = inner_blocked
 		_outer_btn.disabled = outer_blocked
 		_inner_btn.modulate.a = 0.4 if inner_blocked else 1.0
