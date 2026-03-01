@@ -68,8 +68,14 @@ func _process(delta: float) -> void:
 	if track == null:
 		return
 
-	# Remote players: don't simulate physics, just update visual position from network data
+	# Remote players: simple prediction using last known speed, no blocking logic
 	if is_remote:
+		var lane_length: float = track.get_lane_length(lane_idx)
+		if current_speed > 0.0 and lane_length > 0.0:
+			progress += (current_speed * delta) / lane_length
+			while progress >= 1.0:
+				progress -= 1.0
+				laps_completed += 1
 		position = track.get_horse_pos(lane_idx, progress)
 		rotation = track.get_horse_rot(lane_idx, progress)
 		return
