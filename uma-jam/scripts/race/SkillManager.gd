@@ -290,14 +290,14 @@ func _passive_oguri_cap(phase: int) -> void:
 		_passive_state["oguri_triggered"] = true
 		_apply_buff({
 			"id":             "passive_oguri_cap",
-			"speed_bonus":    25.0,
+			"speed_bonus":    20.0,
 			"accel_bonus":    10.0,
 			"recovery_bonus": 0.0,
 			"duration":       60.0,
 			"timer":          60.0,
 			"is_conditional": false,
 		})
-		passive_triggered.emit(character_id, "Final Stretch", "+25/+10 speed/accel (60s)")
+		passive_triggered.emit(character_id, "Final Stretch", "+20/+10 speed/accel (60s)")
 
 func _passive_sakura(rank: int, _phase: int) -> void:
 	var cond := (rank > 1)
