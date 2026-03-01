@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://d1ulvlrkbe22f"]
 
-[ext_resource type="Script" uid="uid://cuyttxjirjuar" path="res://scripts/Race.gd" id="1_race"]
-[ext_resource type="Script" uid="uid://7tn0g2klwqkh" path="res://scripts/Track.gd" id="2_track"]
+[ext_resource type="Script" uid="uid://cuyttxjirjuar" path="res://scripts/race/Race.gd" id="1_race"]
+[ext_resource type="Script" uid="uid://7tn0g2klwqkh" path="res://scripts/race/Track.gd" id="2_track"]
 
 [sub_resource type="StyleBoxFlat" id="panel_dark"]
 content_margin_left = 16.0

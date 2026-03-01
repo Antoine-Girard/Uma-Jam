@@ -25,9 +25,6 @@ func go_to_profile() -> void:
 func go_to_matchmaking() -> void:
 	_change_scene("res://scenes/lobby/Matchmaking.tscn", "Matchmaking")
 
-func go_to_lobby() -> void:
-	_change_scene("res://scenes/lobby/Lobby.tscn", "Lobby")
-
 func go_to_race() -> void:
 	_change_scene("res://scenes/race/Race.tscn", "Course")
 

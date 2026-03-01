@@ -15,6 +15,9 @@ const PHASE_LAST_SPURT := 2
 const ACTIVE_SKILLS: Dictionary = {
 	"speed_boost": {
 		"label":           "Boost de vitesse",
+		"short":           "VIT",
+		"icon":            "tex_support_card_30011",
+		"desc":            "Augmente la vitesse de +12 pendant 4s",
 		"speed_bonus":     12.0,
 		"accel_bonus":     0.0,
 		"recovery_bonus":  0.0,
@@ -23,7 +26,10 @@ const ACTIVE_SKILLS: Dictionary = {
 		"condition":       "",
 	},
 	"accel_boost": {
-		"label":           "Boost d'accélération",
+		"label":           "Boost d'accel",
+		"short":           "ACC",
+		"icon":            "tex_support_card_30014",
+		"desc":            "Augmente l'acceleration de +8 pendant 3s",
 		"speed_bonus":     0.0,
 		"accel_bonus":     8.0,
 		"recovery_bonus":  0.0,
@@ -32,7 +38,10 @@ const ACTIVE_SKILLS: Dictionary = {
 		"condition":       "",
 	},
 	"endurance_recovery": {
-		"label":           "Récupération d'endurance",
+		"label":           "Recup. endurance",
+		"short":           "END",
+		"icon":            "tex_support_card_30028",
+		"desc":            "Recupere de l'endurance (+1/s pendant 30s)",
 		"speed_bonus":     0.0,
 		"accel_bonus":     0.0,
 		"recovery_bonus":  1.0,
@@ -41,7 +50,10 @@ const ACTIVE_SKILLS: Dictionary = {
 		"condition":       "",
 	},
 	"speed_while_overtaking": {
-		"label":           "Vitesse en doublant",
+		"label":           "Vitesse doublant",
+		"short":           "OVT",
+		"icon":            "tex_support_card_30043",
+		"desc":            "Vitesse +12 pendant 5s\nCondition: en train de doubler",
 		"speed_bonus":     12.0,
 		"accel_bonus":     0.0,
 		"recovery_bonus":  0.0,
@@ -50,7 +62,10 @@ const ACTIVE_SKILLS: Dictionary = {
 		"condition":       "overtaking",
 	},
 	"groundwork": {
-		"label":           "Groundwork (départ)",
+		"label":           "Groundwork",
+		"short":           "GND",
+		"icon":            "tex_support_card_30076",
+		"desc":            "Vitesse +8, Accel +8 pendant 5s\nCondition: Tour 1 uniquement",
 		"speed_bonus":     8.0,
 		"accel_bonus":     8.0,
 		"recovery_bonus":  0.0,

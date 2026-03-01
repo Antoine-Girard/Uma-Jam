@@ -68,6 +68,9 @@ function handleMessage(ws, data) {
     case "skill_use":
       handleRelay(ws, data);
       break;
+    case "position_update":
+      handleRelay(ws, data);
+      break;
     case "leave":
       handleDisconnect(ws);
       break;

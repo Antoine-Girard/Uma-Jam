@@ -25,6 +25,8 @@ signal connection_failed
 signal lobby_updated(players: Array, time_remaining: int)
 signal race_starting(seed_val: int, players: Array)
 signal lane_change_received(player_id: String, direction: String)
+signal position_update_received(player_id: String, progress_val: float, laps: int, lane: int, speed: float)
+signal skill_use_received(player_id: String, skill_id: String)
 signal player_left(player_id: String)
 
 # ─── Lifecycle ────────────────────────────────────────────────────────────────
@@ -124,6 +126,16 @@ func send_skill_use(skill_id: String) -> void:
 	_send({"type": "skill_use", "skill_id": skill_id})
 
 
+func send_position_update(progress_val: float, laps: int, lane: int, speed: float) -> void:
+	_send({
+		"type": "position_update",
+		"progress": progress_val,
+		"laps": laps,
+		"lane": lane,
+		"speed": speed
+	})
+
+
 func _send(data: Dictionary) -> void:
 	if _ws != null and _ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
 		_ws.send_text(JSON.stringify(data))
@@ -175,6 +187,19 @@ func _handle_message(data: Dictionary) -> void:
 			var pid: String = str(data.get("player_id", ""))
 			var direction: String = str(data.get("direction", ""))
 			lane_change_received.emit(pid, direction)
+
+		"position_update":
+			var pid: String = str(data.get("player_id", ""))
+			var prog: float = float(data.get("progress", 0.0))
+			var laps: int = int(data.get("laps", 0))
+			var lane: int = int(data.get("lane", 0))
+			var spd: float = float(data.get("speed", 0.0))
+			position_update_received.emit(pid, prog, laps, lane, spd)
+
+		"skill_use":
+			var pid: String = str(data.get("player_id", ""))
+			var sid: String = str(data.get("skill_id", ""))
+			skill_use_received.emit(pid, sid)
 
 		"player_left":
 			var pid: String = str(data.get("player_id", ""))

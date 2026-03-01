@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://build_scene_001"]
 
-[ext_resource type="Script" path="res://scripts/Build.gd" id="1_build"]
+[ext_resource type="Script" path="res://scripts/menu/Build.gd" id="1_build"]
 [ext_resource type="Theme" path="res://scenes/menu/build_theme.tres" id="2_theme"]
 
 [sub_resource type="StyleBoxFlat" id="bg_style"]

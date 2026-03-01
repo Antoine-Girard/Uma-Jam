@@ -9,6 +9,7 @@ enum MatchState { CONNECTING, SEARCHING, IN_LOBBY, STARTING }
 var _state: MatchState = MatchState.CONNECTING
 var _dots_timer: float = 0.0
 var _dots_count: int = 0
+var _connect_elapsed: float = 0.0  # temps écoulé pendant la connexion
 
 @onready var _status_label: Label = $Panel/VBox/StatusLabel
 @onready var _player_list: VBoxContainer = $Panel/VBox/PlayerList
@@ -32,12 +33,16 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if _state == MatchState.CONNECTING or _state == MatchState.SEARCHING:
 		_dots_timer += delta
+		if _state == MatchState.CONNECTING:
+			_connect_elapsed += delta
 		if _dots_timer > 0.5:
 			_dots_timer = 0.0
 			_dots_count = (_dots_count + 1) % 4
 			var dots := ".".repeat(_dots_count)
 			if _state == MatchState.CONNECTING:
-				_status_label.text = "Connexion au serveur%s\n(peut prendre ~30s)" % dots
+				var secs := int(_connect_elapsed)
+				_status_label.text = _get_connect_message(secs, dots)
+				_timer_label.text = "%ds" % secs
 			else:
 				_status_label.text = "Recherche d'adversaires%s" % dots
 
@@ -49,9 +54,10 @@ func _set_state(new_state: MatchState) -> void:
 
 	match _state:
 		MatchState.CONNECTING:
-			_status_label.text = "Connexion au serveur...\n(peut prendre ~30s)"
+			_status_label.text = "Connexion au serveur..."
 			_count_label.text = ""
-			_timer_label.text = ""
+			_timer_label.text = "0s"
+			_connect_elapsed = 0.0
 			_clear_player_list()
 
 		MatchState.SEARCHING:
@@ -79,6 +85,9 @@ func _on_connection_failed() -> void:
 	_status_label.text = "Impossible de se connecter.\nVerifiez votre connexion."
 	_timer_label.text = ""
 	_count_label.text = ""
+	_cancel_btn.text = "REESSAYER"
+	_cancel_btn.pressed.disconnect(_on_cancel)
+	_cancel_btn.pressed.connect(_on_retry)
 
 
 func _on_lobby_updated(players: Array, time_remaining: int) -> void:
@@ -128,3 +137,27 @@ func _on_cancel() -> void:
 func _clear_player_list() -> void:
 	for child in _player_list.get_children():
 		child.queue_free()
+
+
+func _get_connect_message(secs: int, dots: String) -> String:
+	if secs < 5:
+		return "Connexion au serveur%s" % dots
+	elif secs < 15:
+		return "Reveil du serveur%s\nLe serveur demarre, patience..." % dots
+	elif secs < 30:
+		return "Demarrage en cours%s\nPreparation du serveur (%ds)" % [dots, secs]
+	elif secs < 45:
+		return "Presque pret%s\nLe serveur se lance (%ds)" % [dots, secs]
+	else:
+		return "Ca prend du temps%s\nLe serveur met du temps a repondre (%ds)" % [dots, secs]
+
+
+func _on_retry() -> void:
+	_cancel_btn.text = "ANNULER"
+	if _cancel_btn.pressed.is_connected(_on_retry):
+		_cancel_btn.pressed.disconnect(_on_retry)
+	if not _cancel_btn.pressed.is_connected(_on_cancel):
+		_cancel_btn.pressed.connect(_on_cancel)
+	_connect_elapsed = 0.0
+	_set_state(MatchState.CONNECTING)
+	NetworkManager.connect_to_relay()

@@ -39,12 +39,31 @@ var _my_finished:  bool               = false
 var _skipping:     bool               = false
 
 var _skill_buttons: Array[Button]     = []
+var _skill_ids_ordered: Array[String] = []
 var _endurance_bar: ProgressBar       = null
 var _endurance_label: Label           = null
 var _skill_panel: PanelContainer      = null
+var _skill_tooltip: PanelContainer    = null
+var _tooltip_label: Label             = null
+var _tooltip_timer: float             = 0.0
+var _tooltip_btn: Button              = null
+
+# Stats panel
+var _stats_panel: PanelContainer      = null
+var _speed_label: Label               = null
+var _max_speed_label: Label           = null
+var _accel_label: Label               = null
 
 # Multiplayer mapping: player_id (String) -> HorseRacer
 var _player_horses: Dictionary        = {}
+
+# Position sync
+var _sync_timer: float               = 0.0
+const SYNC_INTERVAL: float           = 0.2  # envoyer position toutes les 200ms
+
+# Menu pause/abandon
+var _pause_overlay: Control          = null
+var _paused: bool                    = false
 
 
 func _ready() -> void:
@@ -63,11 +82,14 @@ func _ready() -> void:
 	# Connecter les signaux multijoueur si online
 	if NetworkManager.is_online:
 		NetworkManager.lane_change_received.connect(_on_remote_lane_change)
+		NetworkManager.position_update_received.connect(_on_remote_position_update)
+		NetworkManager.skill_use_received.connect(_on_remote_skill_use)
 		NetworkManager.player_left.connect(_on_remote_player_left)
 
 	_spawn_horses()
 	_freeze_horses()
 	_build_skill_ui()
+	_build_pause_menu()
 	_show_intro()
 
 
@@ -148,6 +170,8 @@ func _show_intro() -> void:
 	var panel_tw := create_tween().set_parallel(true)
 	panel_tw.tween_property($UI/LapPanel, "modulate:a", 1.0, 0.3)
 	panel_tw.tween_property($UI/PosPanel, "modulate:a", 1.0, 0.3)
+	if _stats_panel:
+		panel_tw.tween_property(_stats_panel, "modulate:a", 1.0, 0.3)
 
 	# Lancer le countdown
 	_start_countdown()
@@ -251,11 +275,15 @@ func _start_countdown() -> void:
 
 	_race_started = true
 	_lane_btns.visible = true
-	_skip_btn.visible = true
 	if _skill_panel:
 		_skill_panel.visible = true
-	var fade := create_tween()
-	fade.tween_property(_skip_btn, "modulate:a", 1.0, 0.5).set_delay(1.0)
+	# Pas de bouton ACCELERER en matchmaking online
+	if NetworkManager.is_online:
+		_skip_btn.visible = false
+	else:
+		_skip_btn.visible = true
+		var fade := create_tween()
+		fade.tween_property(_skip_btn, "modulate:a", 1.0, 0.5).set_delay(1.0)
 	_unfreeze_horses()
 
 
@@ -368,6 +396,10 @@ func _on_skip() -> void:
 func _exit_tree() -> void:
 	if NetworkManager.lane_change_received.is_connected(_on_remote_lane_change):
 		NetworkManager.lane_change_received.disconnect(_on_remote_lane_change)
+	if NetworkManager.position_update_received.is_connected(_on_remote_position_update):
+		NetworkManager.position_update_received.disconnect(_on_remote_position_update)
+	if NetworkManager.skill_use_received.is_connected(_on_remote_skill_use):
+		NetworkManager.skill_use_received.disconnect(_on_remote_skill_use)
 	if NetworkManager.player_left.is_connected(_on_remote_player_left):
 		NetworkManager.player_left.disconnect(_on_remote_player_left)
 
@@ -395,6 +427,24 @@ func _on_remote_lane_change(player_id: String, direction: String) -> void:
 			horse.move_outer()
 
 
+func _on_remote_position_update(player_id: String, progress_val: float, laps: int, lane: int, speed: float) -> void:
+	if player_id in _player_horses:
+		var horse: HorseRacer = _player_horses[player_id]
+		# Corriger la position du cheval distant
+		horse.progress = progress_val
+		horse.laps_completed = laps
+		horse.lane_idx = lane
+		horse.current_speed = speed
+
+
+func _on_remote_skill_use(player_id: String, skill_id: String) -> void:
+	if player_id in _player_horses:
+		var horse: HorseRacer = _player_horses[player_id]
+		if horse.skill_manager != null:
+			horse.skill_manager.activate_skill(skill_id)
+			print("[Race] Joueur %s a utilisé le skill '%s'" % [player_id, skill_id])
+
+
 func _on_remote_player_left(player_id: String) -> void:
 	if player_id in _player_horses:
 		# Le cheval continue tout seul (comme un bot)
@@ -403,7 +453,16 @@ func _on_remote_player_left(player_id: String) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if _my_horse == null or _my_finished or not _race_started:
+	# Menu pause avec ESC
+	if event.is_action_pressed("ui_cancel") and _race_started and not _race_over:
+		if _paused:
+			_on_resume()
+		else:
+			_paused = true
+			_pause_overlay.visible = true
+		return
+
+	if _my_horse == null or _my_finished or not _race_started or _paused:
 		return
 	if event.is_action_pressed("ui_left"):
 		_my_horse.move_inner()
@@ -426,6 +485,19 @@ func _process(delta: float) -> void:
 	_check_finishers()
 	_update_ui()
 	_update_endurance_ui()
+	_update_stats_ui()
+	_update_tooltip(delta)
+	# Envoi périodique de la position au relay
+	if NetworkManager.is_online and _my_horse and not _my_finished:
+		_sync_timer += delta
+		if _sync_timer >= SYNC_INTERVAL:
+			_sync_timer = 0.0
+			NetworkManager.send_position_update(
+				_my_horse.progress,
+				_my_horse.laps_completed,
+				_my_horse.lane_idx,
+				_my_horse.current_speed
+			)
 
 
 func _check_finishers() -> void:
@@ -513,11 +585,12 @@ func _build_skill_ui() -> void:
 	if skill_ids.is_empty():
 		skill_ids = ["speed_boost", "accel_boost", "endurance_recovery", "speed_while_overtaking", "groundwork"]
 
+	# ─── Skill panel (bas de l'écran) ─────────────────────────────────
 	_skill_panel = PanelContainer.new()
 	_skill_panel.name = "SkillPanel"
 	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = Color(0.05, 0.05, 0.12, 0.75)
-	panel_style.set_corner_radius_all(10)
+	panel_style.bg_color = Color(0.05, 0.05, 0.12, 0.8)
+	panel_style.set_corner_radius_all(12)
 	panel_style.content_margin_left = 10.0
 	panel_style.content_margin_right = 10.0
 	panel_style.content_margin_top = 6.0
@@ -528,7 +601,7 @@ func _build_skill_ui() -> void:
 	_skill_panel.anchor_right = 1.0
 	_skill_panel.anchor_top = 1.0
 	_skill_panel.anchor_bottom = 1.0
-	_skill_panel.offset_top = -130.0
+	_skill_panel.offset_top = -150.0
 	_skill_panel.offset_bottom = -10.0
 	_skill_panel.offset_left = 10.0
 	_skill_panel.offset_right = -10.0
@@ -537,6 +610,7 @@ func _build_skill_ui() -> void:
 	vbox.add_theme_constant_override("separation", 4)
 	_skill_panel.add_child(vbox)
 
+	# Barre d'endurance
 	var endurance_hbox := HBoxContainer.new()
 	endurance_hbox.add_theme_constant_override("separation", 8)
 	vbox.add_child(endurance_hbox)
@@ -554,17 +628,14 @@ func _build_skill_ui() -> void:
 	_endurance_bar.custom_minimum_size = Vector2(0, 18)
 	_endurance_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_endurance_bar.show_percentage = false
-
 	var bar_bg := StyleBoxFlat.new()
 	bar_bg.bg_color = Color(0.1, 0.1, 0.15, 1.0)
 	bar_bg.set_corner_radius_all(4)
 	_endurance_bar.add_theme_stylebox_override("background", bar_bg)
-
 	var bar_fill := StyleBoxFlat.new()
 	bar_fill.bg_color = Color(0.2, 0.6, 1.0, 1.0)
 	bar_fill.set_corner_radius_all(4)
 	_endurance_bar.add_theme_stylebox_override("fill", bar_fill)
-
 	endurance_hbox.add_child(_endurance_bar)
 
 	_endurance_label = Label.new()
@@ -574,57 +645,121 @@ func _build_skill_ui() -> void:
 	_endurance_label.custom_minimum_size = Vector2(55, 0)
 	endurance_hbox.add_child(_endurance_label)
 
+	# Boutons de skills avec icônes
 	var btn_hbox := HBoxContainer.new()
-	btn_hbox.add_theme_constant_override("separation", 8)
+	btn_hbox.add_theme_constant_override("separation", 6)
 	btn_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	vbox.add_child(btn_hbox)
 
 	_skill_buttons = []
+	_skill_ids_ordered = []
 	for skill_id in skill_ids:
 		if not SkillData.ACTIVE_SKILLS.has(skill_id):
 			continue
 		var def: Dictionary = SkillData.ACTIVE_SKILLS[skill_id]
+
 		var btn := Button.new()
-		btn.text = def["label"]
-		btn.custom_minimum_size = Vector2(120, 40)
+		btn.custom_minimum_size = Vector2(0, 70)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
+		# Style du bouton
 		var btn_style := StyleBoxFlat.new()
-		btn_style.bg_color = Color(0.15, 0.25, 0.5, 0.9)
+		btn_style.bg_color = Color(0.12, 0.2, 0.4, 0.9)
 		btn_style.set_corner_radius_all(8)
-		btn_style.border_color = Color(0.4, 0.6, 1.0, 0.6)
+		btn_style.border_color = Color(0.4, 0.6, 1.0, 0.5)
 		btn_style.set_border_width_all(1)
+		btn_style.content_margin_left = 4.0
+		btn_style.content_margin_right = 4.0
+		btn_style.content_margin_top = 4.0
+		btn_style.content_margin_bottom = 4.0
 		btn.add_theme_stylebox_override("normal", btn_style)
 
-		var btn_hover := StyleBoxFlat.new()
-		btn_hover.bg_color = Color(0.2, 0.35, 0.65, 0.95)
-		btn_hover.set_corner_radius_all(8)
+		var btn_hover := btn_style.duplicate()
+		btn_hover.bg_color = Color(0.18, 0.3, 0.55, 0.95)
 		btn_hover.border_color = Color(0.5, 0.7, 1.0, 0.8)
-		btn_hover.set_border_width_all(1)
 		btn.add_theme_stylebox_override("hover", btn_hover)
 
-		var btn_pressed := StyleBoxFlat.new()
-		btn_pressed.bg_color = Color(0.1, 0.15, 0.35, 0.9)
-		btn_pressed.set_corner_radius_all(8)
+		var btn_pressed := btn_style.duplicate()
+		btn_pressed.bg_color = Color(0.08, 0.12, 0.28, 0.9)
 		btn.add_theme_stylebox_override("pressed", btn_pressed)
 
-		var btn_disabled := StyleBoxFlat.new()
-		btn_disabled.bg_color = Color(0.12, 0.12, 0.18, 0.6)
-		btn_disabled.set_corner_radius_all(8)
+		var btn_disabled := btn_style.duplicate()
+		btn_disabled.bg_color = Color(0.1, 0.1, 0.15, 0.5)
+		btn_disabled.border_color = Color(0.3, 0.3, 0.4, 0.3)
 		btn.add_theme_stylebox_override("disabled", btn_disabled)
 
-		btn.add_theme_font_size_override("font_size", 13)
+		# Contenu du bouton : VBox avec icône + texte
+		var btn_content := VBoxContainer.new()
+		btn_content.alignment = BoxContainer.ALIGNMENT_CENTER
+		btn_content.add_theme_constant_override("separation", 2)
+		btn_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		btn.add_child(btn_content)
 
-		var cost_str := "  (-%d end)" % int(def["endurance_cost"])
-		btn.tooltip_text = "%s%s\n%s" % [def["label"], cost_str,
-			"Condition: " + def["condition"] if def["condition"] != "" else "Pas de condition"]
+		# Icône de la carte
+		var icon_path := "res://assets/cards/%s.png" % def.get("icon", "")
+		var tex := load(icon_path) as Texture2D
+		if tex:
+			var icon := TextureRect.new()
+			icon.texture = tex
+			icon.custom_minimum_size = Vector2(36, 36)
+			icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+			icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			btn_content.add_child(icon)
+
+		# Label court
+		var short_label := Label.new()
+		short_label.text = "%s  -%d" % [def.get("short", "?"), int(def["endurance_cost"])]
+		short_label.add_theme_font_size_override("font_size", 11)
+		short_label.add_theme_color_override("font_color", Color(0.8, 0.85, 1.0))
+		short_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		short_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		btn_content.add_child(short_label)
 
 		btn.pressed.connect(_on_skill_button.bind(skill_id))
+		btn.mouse_entered.connect(_on_skill_hover_start.bind(btn, skill_id))
+		btn.mouse_exited.connect(_on_skill_hover_end)
 		btn_hbox.add_child(btn)
 		_skill_buttons.append(btn)
+		_skill_ids_ordered.append(skill_id)
 
 	_ui.add_child(_skill_panel)
 	_skill_panel.visible = false
+
+	# ─── Tooltip (affiché au hover sur un skill) ──────────────────────
+	_skill_tooltip = PanelContainer.new()
+	_skill_tooltip.name = "SkillTooltip"
+	var tt_style := StyleBoxFlat.new()
+	tt_style.bg_color = Color(0.08, 0.08, 0.14, 0.95)
+	tt_style.set_corner_radius_all(8)
+	tt_style.border_color = Color(0.4, 0.55, 0.9, 0.7)
+	tt_style.set_border_width_all(1)
+	tt_style.content_margin_left = 12.0
+	tt_style.content_margin_right = 12.0
+	tt_style.content_margin_top = 8.0
+	tt_style.content_margin_bottom = 8.0
+	_skill_tooltip.add_theme_stylebox_override("panel", tt_style)
+	_skill_tooltip.anchor_left = 0.5
+	_skill_tooltip.anchor_right = 0.5
+	_skill_tooltip.anchor_top = 1.0
+	_skill_tooltip.anchor_bottom = 1.0
+	_skill_tooltip.offset_left = -200.0
+	_skill_tooltip.offset_right = 200.0
+	_skill_tooltip.offset_top = -180.0
+	_skill_tooltip.offset_bottom = -160.0
+	_skill_tooltip.visible = false
+	_skill_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	_tooltip_label = Label.new()
+	_tooltip_label.add_theme_font_size_override("font_size", 14)
+	_tooltip_label.add_theme_color_override("font_color", Color(0.9, 0.9, 1.0))
+	_tooltip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tooltip_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_skill_tooltip.add_child(_tooltip_label)
+	_ui.add_child(_skill_tooltip)
+
+	# ─── Stats panel (gauche, sous le tour) ──────────────────────────
+	_build_stats_panel()
 
 
 func _on_skill_button(skill_id: String) -> void:
@@ -635,6 +770,113 @@ func _on_skill_button(skill_id: String) -> void:
 	var ok: bool = _my_horse.skill_manager.activate_skill(skill_id)
 	if ok:
 		print("[Race] Skill '%s' activé !" % skill_id)
+		if NetworkManager.is_online:
+			NetworkManager.send_skill_use(skill_id)
+
+
+func _on_skill_hover_start(btn: Button, skill_id: String) -> void:
+	_tooltip_btn = btn
+	_tooltip_timer = 0.0
+	if not SkillData.ACTIVE_SKILLS.has(skill_id):
+		return
+	var def: Dictionary = SkillData.ACTIVE_SKILLS[skill_id]
+	var text := "%s\n%s\nDuree: %.0fs | Cout: -%d endurance" % [
+		def["label"], def.get("desc", ""), def["duration"], int(def["endurance_cost"])]
+	_tooltip_label.text = text
+
+
+func _on_skill_hover_end() -> void:
+	_tooltip_btn = null
+	_tooltip_timer = 0.0
+	if _skill_tooltip:
+		_skill_tooltip.visible = false
+
+
+func _update_tooltip(delta: float) -> void:
+	if _tooltip_btn == null or _skill_tooltip == null:
+		return
+	_tooltip_timer += delta
+	if _tooltip_timer >= 1.0 and not _skill_tooltip.visible:
+		_skill_tooltip.visible = true
+
+
+# ─── Stats panel ─────────────────────────────────────────────────────────────
+
+func _build_stats_panel() -> void:
+	_stats_panel = PanelContainer.new()
+	_stats_panel.name = "StatsPanel"
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.05, 0.05, 0.12, 0.75)
+	style.set_corner_radius_all(10)
+	style.content_margin_left = 10.0
+	style.content_margin_right = 10.0
+	style.content_margin_top = 6.0
+	style.content_margin_bottom = 6.0
+	_stats_panel.add_theme_stylebox_override("panel", style)
+
+	_stats_panel.anchor_left = 0.0
+	_stats_panel.anchor_top = 0.0
+	_stats_panel.offset_left = 20.0
+	_stats_panel.offset_top = 100.0
+	_stats_panel.offset_right = 180.0
+	_stats_panel.offset_bottom = 220.0
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 4)
+	_stats_panel.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "STATS"
+	title.add_theme_font_size_override("font_size", 12)
+	title.add_theme_color_override("font_color", Color(0.7, 0.85, 1.0))
+	vbox.add_child(title)
+
+	_speed_label = Label.new()
+	_speed_label.text = "Vitesse: 0"
+	_speed_label.add_theme_font_size_override("font_size", 14)
+	_speed_label.add_theme_color_override("font_color", Color(0.4, 1.0, 0.5))
+	vbox.add_child(_speed_label)
+
+	_max_speed_label = Label.new()
+	_max_speed_label.text = "Max: 0"
+	_max_speed_label.add_theme_font_size_override("font_size", 14)
+	_max_speed_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
+	vbox.add_child(_max_speed_label)
+
+	_accel_label = Label.new()
+	_accel_label.text = "Accel: 0"
+	_accel_label.add_theme_font_size_override("font_size", 14)
+	_accel_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1.0))
+	vbox.add_child(_accel_label)
+
+	_ui.add_child(_stats_panel)
+	_stats_panel.modulate.a = 0.0
+
+
+func _update_stats_ui() -> void:
+	if _my_horse == null or _stats_panel == null:
+		return
+	var effective_max := _my_horse.max_speed
+	var effective_accel := _my_horse.acceleration
+	if _my_horse.skill_manager != null:
+		var speed_bonus: float = _my_horse.skill_manager.get_speed_bonus()
+		var accel_bonus: float = _my_horse.skill_manager.get_accel_bonus()
+		effective_max = _my_horse.max_speed + (speed_bonus / SkillData.BASE_SPEED) * _my_horse.max_speed
+		effective_accel = _my_horse.acceleration + (accel_bonus / SkillData.BASE_ACCEL) * _my_horse.acceleration
+
+	_speed_label.text = "Vitesse: %.1f" % _my_horse.current_speed
+	_max_speed_label.text = "Max: %.1f" % effective_max
+	_accel_label.text = "Accel: %.1f" % effective_accel
+
+	# Colorer en vert si boosté
+	if effective_max > _my_horse.max_speed:
+		_max_speed_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
+	else:
+		_max_speed_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
+	if effective_accel > _my_horse.acceleration:
+		_accel_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
+	else:
+		_accel_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1.0))
 
 
 func _update_endurance_ui() -> void:
@@ -659,16 +901,90 @@ func _update_endurance_ui() -> void:
 
 	for i in _skill_buttons.size():
 		var btn: Button = _skill_buttons[i]
-		var skill_ids: Array = GameData.get_skill_ids()
-		if skill_ids.is_empty():
-			skill_ids = ["speed_boost", "accel_boost", "endurance_recovery", "speed_while_overtaking", "groundwork"]
-		if i < skill_ids.size():
-			var sid: String = skill_ids[i]
+		if i < _skill_ids_ordered.size():
+			var sid: String = _skill_ids_ordered[i]
 			if SkillData.ACTIVE_SKILLS.has(sid):
 				var cost: float = SkillData.ACTIVE_SKILLS[sid]["endurance_cost"]
 				if sm.character_id == "maruzenski":
 					cost += 1.0
 				btn.disabled = end_val < cost
+
+
+# ─── Menu Pause / Abandon ────────────────────────────────────────────────────
+
+func _build_pause_menu() -> void:
+	_pause_overlay = Control.new()
+	_pause_overlay.name = "PauseOverlay"
+	_pause_overlay.anchor_right = 1.0
+	_pause_overlay.anchor_bottom = 1.0
+	_pause_overlay.visible = false
+
+	var bg := ColorRect.new()
+	bg.anchor_right = 1.0
+	bg.anchor_bottom = 1.0
+	bg.color = Color(0.0, 0.0, 0.05, 0.7)
+	_pause_overlay.add_child(bg)
+
+	var center := VBoxContainer.new()
+	center.anchor_left = 0.5
+	center.anchor_right = 0.5
+	center.anchor_top = 0.5
+	center.anchor_bottom = 0.5
+	center.offset_left = -160.0
+	center.offset_right = 160.0
+	center.offset_top = -100.0
+	center.offset_bottom = 100.0
+	center.alignment = BoxContainer.ALIGNMENT_CENTER
+	center.add_theme_constant_override("separation", 20)
+	_pause_overlay.add_child(center)
+
+	var title := Label.new()
+	title.text = "PAUSE"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 36)
+	title.add_theme_color_override("font_color", Color.WHITE)
+	center.add_child(title)
+
+	var resume_btn := Button.new()
+	resume_btn.text = "REPRENDRE"
+	resume_btn.custom_minimum_size = Vector2(250, 50)
+	resume_btn.add_theme_font_size_override("font_size", 20)
+	var resume_style := StyleBoxFlat.new()
+	resume_style.bg_color = Color(0.15, 0.45, 0.2, 0.95)
+	resume_style.set_corner_radius_all(10)
+	resume_btn.add_theme_stylebox_override("normal", resume_style)
+	resume_btn.add_theme_stylebox_override("hover", resume_style)
+	resume_btn.add_theme_stylebox_override("pressed", resume_style)
+	resume_btn.pressed.connect(_on_resume)
+	center.add_child(resume_btn)
+
+	var abandon_btn := Button.new()
+	abandon_btn.text = "ABANDONNER"
+	abandon_btn.custom_minimum_size = Vector2(250, 50)
+	abandon_btn.add_theme_font_size_override("font_size", 20)
+	var abandon_style := StyleBoxFlat.new()
+	abandon_style.bg_color = Color(0.6, 0.15, 0.15, 0.95)
+	abandon_style.set_corner_radius_all(10)
+	abandon_btn.add_theme_stylebox_override("normal", abandon_style)
+	abandon_btn.add_theme_stylebox_override("hover", abandon_style)
+	abandon_btn.add_theme_stylebox_override("pressed", abandon_style)
+	abandon_btn.pressed.connect(_on_abandon)
+	center.add_child(abandon_btn)
+
+	_ui.add_child(_pause_overlay)
+
+
+func _on_resume() -> void:
+	_pause_overlay.visible = false
+	_paused = false
+
+
+func _on_abandon() -> void:
+	_pause_overlay.visible = false
+	_paused = false
+	if NetworkManager.is_online:
+		NetworkManager.disconnect_from_relay()
+	GameManager.go_to_main_menu()
 
 
 # ─── Fin de course ───────────────────────────────────────────────────────────

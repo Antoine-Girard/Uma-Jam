@@ -17,10 +17,10 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-GameData="*res://scripts/GameData.gd"
-NetworkManager="*res://scripts/NetworkManager.gd"
-GameManager="*res://scripts/GameManager.gd"
-SkillData="*res://scripts/SkillData.gd"
+GameData="*res://scripts/autoload/GameData.gd"
+NetworkManager="*res://scripts/autoload/NetworkManager.gd"
+GameManager="*res://scripts/autoload/GameManager.gd"
+SkillData="*res://scripts/autoload/SkillData.gd"
 
 [display]
 
