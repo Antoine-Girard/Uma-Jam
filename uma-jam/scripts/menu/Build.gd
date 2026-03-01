@@ -144,15 +144,15 @@ func _populate_cards():
 		btn.add_child(bg)
 
 		var img_path = "res://assets/cards/" + card_data["img"] + ".png"
-		var img = Image.load_from_file(ProjectSettings.globalize_path(img_path))
-		if img:
+		var card_tex = load(img_path)
+		if card_tex:
 			var tex = TextureRect.new()
 			tex.set_anchors_preset(Control.PRESET_FULL_RECT)
 			tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 			tex.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 			tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			tex.texture = ImageTexture.create_from_image(img)
+			tex.texture = card_tex
 			btn.add_child(tex)
 
 		btn.tooltip_text = "%s [%s]\n%s" % [card_data["name"], card_data["category"], card_data["desc"]]
@@ -221,8 +221,8 @@ func _refresh_deck_ui():
 			slot.add_theme_stylebox_override("panel", occupied_style)
 
 			var img_path = "res://assets/cards/" + deck[i]["img"] + ".png"
-			var img = Image.load_from_file(ProjectSettings.globalize_path(img_path))
-			if img:
+			var card_tex = load(img_path)
+			if card_tex:
 				var tex_rect = TextureRect.new()
 				tex_rect.name = "SlotTex"
 				tex_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -230,7 +230,7 @@ func _refresh_deck_ui():
 				tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 				tex_rect.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 				tex_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-				tex_rect.texture = ImageTexture.create_from_image(img)
+				tex_rect.texture = card_tex
 				slot.add_child(tex_rect)
 
 			slot.tooltip_text = "%s [%s]\n%s" % [deck[i]["name"], deck[i]["category"], deck[i]["desc"]]
