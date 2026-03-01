@@ -1,41 +1,41 @@
-[gd_scene load_steps=5 format=3 uid="uid://bu0t4itqre12"]
+[gd_scene format=3 uid="uid://bu0t4itqre12"]
 
 [ext_resource type="Script" uid="uid://da8cqvlta11xt" path="res://scripts/menu/MainMenu.gd" id="1_abc12"]
-[ext_resource type="Texture2D" path="res://assets/Backgrounds/uma-musume-pretty-derby-anime-race-1nrcprlohf088zs6.jpg" id="bg_1"]
-[ext_resource type="FontFile" path="res://assets/fonts/RacingSansOne-Regular.ttf" id="font_racing"]
+[ext_resource type="Texture2D" uid="uid://duvcwf7wnv4vm" path="res://assets/Backgrounds/uma-musume-pretty-derby-anime-race-1nrcprlohf088zs6.jpg" id="bg_1"]
+[ext_resource type="FontFile" uid="uid://crh25pdvqi8of" path="res://assets/fonts/RacingSansOne-Regular.ttf" id="font_racing"]
 
 [sub_resource type="StyleBoxFlat" id="btn_matchmaking"]
+content_margin_left = 30.0
+content_margin_top = 16.0
+content_margin_right = 30.0
+content_margin_bottom = 16.0
 bg_color = Color(0.15, 0.45, 0.2, 0.95)
 corner_radius_top_left = 14
 corner_radius_top_right = 14
 corner_radius_bottom_right = 14
 corner_radius_bottom_left = 14
-content_margin_left = 30.0
-content_margin_top = 16.0
-content_margin_right = 30.0
-content_margin_bottom = 16.0
 
-[sub_resource type="StyleBoxFlat" id="btn_quit"]
-bg_color = Color(0.5, 0.15, 0.15, 0.85)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
+[sub_resource type="StyleBoxFlat" id="btn_race"]
 content_margin_left = 10.0
 content_margin_top = 6.0
 content_margin_right = 10.0
 content_margin_bottom = 6.0
-
-[sub_resource type="StyleBoxFlat" id="btn_race"]
 bg_color = Color(0.2, 0.25, 0.45, 0.85)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="btn_quit"]
 content_margin_left = 10.0
 content_margin_top = 6.0
 content_margin_right = 10.0
 content_margin_bottom = 6.0
+bg_color = Color(0.5, 0.15, 0.15, 0.85)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [node name="MainMenu" type="Control" unique_id=1056994140]
 layout_mode = 3
@@ -46,7 +46,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_abc12")
 
-[node name="Background" type="TextureRect" parent="."]
+[node name="Background" type="TextureRect" parent="." unique_id=56623965]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -57,7 +57,7 @@ texture = ExtResource("bg_1")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="TitleContainer" type="VBoxContainer" parent="."]
+[node name="TitleContainer" type="VBoxContainer" parent="." unique_id=1152929624]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -76,7 +76,7 @@ theme_override_font_sizes/font_size = 62
 text = "UMA-JAM-RACING"
 horizontal_alignment = 1
 
-[node name="Subtitle" type="Label" parent="TitleContainer"]
+[node name="Subtitle" type="Label" parent="TitleContainer" unique_id=245989625]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.85, 0.75, 0.85)
 theme_override_colors/font_outline_color = Color(0.05, 0.02, 0, 1)
@@ -85,7 +85,7 @@ theme_override_font_sizes/font_size = 18
 text = "a umamusume fan game"
 horizontal_alignment = 1
 
-[node name="MatchmakingBtn" type="Button" parent="."]
+[node name="MatchmakingBtn" type="Button" parent="." unique_id=379574214]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -100,28 +100,27 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 28
 theme_override_styles/normal = SubResource("btn_matchmaking")
-theme_override_styles/hover = SubResource("btn_matchmaking")
 theme_override_styles/pressed = SubResource("btn_matchmaking")
+theme_override_styles/hover = SubResource("btn_matchmaking")
 text = "MATCHMAKING"
 
-[node name="TopLeft" type="HBoxContainer" parent="."]
+[node name="TopLeft" type="HBoxContainer" parent="." unique_id=104416099]
 layout_mode = 1
-anchors_preset = 0
 offset_left = 16.0
 offset_top = 16.0
 offset_right = 250.0
 offset_bottom = 60.0
 
-[node name="RaceBtn" type="Button" parent="TopLeft"]
+[node name="RaceBtn" type="Button" parent="TopLeft" unique_id=1592021589]
 custom_minimum_size = Vector2(150, 40)
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 theme_override_styles/normal = SubResource("btn_race")
-theme_override_styles/hover = SubResource("btn_race")
 theme_override_styles/pressed = SubResource("btn_race")
+theme_override_styles/hover = SubResource("btn_race")
 text = "RACE (AI)"
 
-[node name="TopRight" type="HBoxContainer" parent="."]
+[node name="TopRight" type="HBoxContainer" parent="." unique_id=182352411]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -133,13 +132,13 @@ offset_bottom = 60.0
 grow_horizontal = 0
 alignment = 2
 
-[node name="QuitBtn" type="Button" parent="TopRight"]
+[node name="QuitBtn" type="Button" parent="TopRight" unique_id=1000807600]
 custom_minimum_size = Vector2(120, 40)
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 theme_override_styles/normal = SubResource("btn_quit")
-theme_override_styles/hover = SubResource("btn_quit")
 theme_override_styles/pressed = SubResource("btn_quit")
+theme_override_styles/hover = SubResource("btn_quit")
 text = "QUIT"
 
 [node name="BottomBar" type="HBoxContainer" parent="." unique_id=1895386965]
@@ -168,7 +167,7 @@ size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 22
 text = "PROFILE"
 
-[node name="TutorialButton" type="Button" parent="BottomBar"]
+[node name="TutorialButton" type="Button" parent="BottomBar" unique_id=1791774219]
 custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 size_flags_horizontal = 3

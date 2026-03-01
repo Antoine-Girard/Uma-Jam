@@ -1,6 +1,6 @@
 extends Node2D
 
-const LAPS := 3
+const LAPS := 5
 const SKIP_SPEED_MULT := 12.0
 const BASE_MAX_SPEED := 55.0
 const BASE_ACCEL := 5.5

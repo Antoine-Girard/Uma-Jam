@@ -27,7 +27,7 @@ var is_blocked: bool   = false
 var blocked_by: Node2D = null
 var is_remote: bool    = false  # Remote player: position controlled by network updates only
 
-const BLOCK_PX := 38.0  # pixel distance for blocking (portrait ~36px)
+const BLOCK_DIST_PX := 44.0
 
 var _label: Label
 var _sprite: Sprite2D
@@ -88,11 +88,9 @@ func _process(delta: float) -> void:
 		effective_max = max_speed + (speed_bonus / SkillData.BASE_SPEED) * max_speed
 		effective_accel = acceleration + (accel_bonus / SkillData.BASE_ACCEL) * acceleration
 
-	# Check if blocked by a horse directly ahead on the same lane
 	_update_blocking()
 	if is_blocked and blocked_by != null:
 		var blocker_speed: float = blocked_by.current_speed
-		# Immediately cap current speed too, not just max
 		effective_max = minf(effective_max, blocker_speed)
 		if current_speed > blocker_speed:
 			current_speed = blocker_speed
@@ -105,20 +103,9 @@ func _process(delta: float) -> void:
 		current_speed = move_toward(current_speed, effective_max, effective_accel * delta)
 
 	var lane_length: float = track.get_lane_length(lane_idx)
-	var progress_delta: float = (current_speed * delta) / lane_length
-	progress += progress_delta
+	progress += (current_speed * delta) / lane_length
 
-	# Hard clamp: never go past the blocker's progress
-	if is_blocked and blocked_by != null:
-		var blocker_score: float = blocked_by.laps_completed + blocked_by.progress
-		var my_score: float = laps_completed + progress
-		# Only clamp if we're not too far ahead (prevents glitches at finish)
-		if my_score > blocker_score - 0.001 and my_score < blocker_score + 0.5:
-			progress = blocked_by.progress - 0.001
-			laps_completed = blocked_by.laps_completed
-			if progress < 0.0:
-				progress += 1.0
-				laps_completed -= 1
+	_clamp_to_nearest_ahead()
 
 	while progress >= 1.0:
 		progress -= 1.0
@@ -127,43 +114,84 @@ func _process(delta: float) -> void:
 	position = track.get_horse_pos(lane_idx, progress)
 	rotation = track.get_horse_rot(lane_idx, progress)
 
+func _get_min_gap() -> float:
+	if track == null:
+		return 0.025
+	var lane_len: float = track.get_lane_length(lane_idx)
+	return BLOCK_DIST_PX / lane_len if lane_len > 0.0 else 0.025
+
 func _update_blocking() -> void:
 	is_blocked = false
 	blocked_by = null
-	var my_score: float = laps_completed + progress
+	var my_score: float = float(laps_completed) + progress
+	var min_gap: float = _get_min_gap()
+	var nearest_gap: float = INF
 	for h in all_horses:
 		if h == self:
 			continue
 		if h.lane_idx != lane_idx:
 			continue
-		# Ignore finished horses (they're parked at the finish line)
-		if not h.is_processing():
+		if not h.is_processing() and not h.is_remote:
 			continue
-		# Must be ahead of us
-		var h_score: float = h.laps_completed + h.progress
-		if h_score <= my_score:
+		var h_score: float = float(h.laps_completed) + h.progress
+		var gap: float = h_score - my_score
+		if gap <= 0.0 or gap > 0.5:
 			continue
-		# Check visual distance (pixel)
-		var dist_px: float = position.distance_to(h.position)
-		if dist_px < BLOCK_PX:
-			is_blocked = true
+		if gap < nearest_gap:
+			nearest_gap = gap
 			blocked_by = h
-			break
+	if blocked_by != null and nearest_gap < min_gap:
+		is_blocked = true
+	else:
+		blocked_by = null
+
+func _clamp_to_nearest_ahead() -> void:
+	var my_score: float = float(laps_completed) + progress
+	var min_gap: float = _get_min_gap()
+	var nearest: Node2D = null
+	var nearest_gap: float = INF
+	for h in all_horses:
+		if h == self:
+			continue
+		if h.lane_idx != lane_idx:
+			continue
+		if not h.is_processing() and not h.is_remote:
+			continue
+		var h_score: float = float(h.laps_completed) + h.progress
+		var gap: float = h_score - my_score
+		if gap > 0.0 and gap < nearest_gap:
+			nearest_gap = gap
+			nearest = h
+	if nearest != null and nearest_gap < min_gap:
+		var blocker_score: float = float(nearest.laps_completed) + nearest.progress
+		var max_score: float = blocker_score - min_gap
+		if max_score < 0.0:
+			max_score = 0.0
+		if my_score > max_score:
+			laps_completed = int(max_score)
+			progress = max_score - float(laps_completed)
+			if progress < 0.0:
+				progress = 0.0
+			current_speed = minf(current_speed, nearest.current_speed)
+		is_blocked = true
+		blocked_by = nearest
 
 func is_lane_blocked_by_neighbor(target_lane: int) -> bool:
-	# Calculate where we WOULD be on the target lane
+	if track == null:
+		return false
 	var target_progress: float = track.convert_progress(lane_idx, target_lane, progress)
-	var my_target_pos: Vector2 = track.get_horse_pos(target_lane, target_progress)
+	var my_target_score: float = float(laps_completed) + target_progress
+	var target_lane_len: float = track.get_lane_length(target_lane)
+	var min_gap: float = BLOCK_DIST_PX / target_lane_len if target_lane_len > 0.0 else 0.025
 	for h in all_horses:
 		if h == self:
 			continue
 		if h.lane_idx != target_lane:
 			continue
-		# Ignore finished horses
-		if not h.is_processing():
+		if not h.is_processing() and not h.is_remote:
 			continue
-		var dist_px: float = my_target_pos.distance_to(h.position)
-		if dist_px < BLOCK_PX:
+		var h_score: float = float(h.laps_completed) + h.progress
+		if absf(h_score - my_target_score) < min_gap:
 			return true
 	return false
 
