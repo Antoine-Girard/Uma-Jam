@@ -25,6 +25,7 @@ var skill_manager: SkillManager = null
 var all_horses: Array  = []
 var is_blocked: bool   = false
 var blocked_by: Node2D = null
+var is_remote: bool    = false  # Remote player: position controlled by network updates only
 
 const BLOCK_PX := 38.0  # pixel distance for blocking (portrait ~36px)
 
@@ -67,6 +68,12 @@ func _process(delta: float) -> void:
 	if track == null:
 		return
 
+	# Remote players: don't simulate physics, just update visual position from network data
+	if is_remote:
+		position = track.get_horse_pos(lane_idx, progress)
+		rotation = track.get_horse_rot(lane_idx, progress)
+		return
+
 	var effective_max := max_speed
 	var effective_accel := acceleration
 	if skill_manager != null:
@@ -99,7 +106,8 @@ func _process(delta: float) -> void:
 	if is_blocked and blocked_by != null:
 		var blocker_score: float = blocked_by.laps_completed + blocked_by.progress
 		var my_score: float = laps_completed + progress
-		if my_score > blocker_score - 0.001:
+		# Only clamp if we're not too far ahead (prevents glitches at finish)
+		if my_score > blocker_score - 0.001 and my_score < blocker_score + 0.5:
 			progress = blocked_by.progress - 0.001
 			laps_completed = blocked_by.laps_completed
 			if progress < 0.0:
@@ -122,6 +130,9 @@ func _update_blocking() -> void:
 			continue
 		if h.lane_idx != lane_idx:
 			continue
+		# Ignore finished horses (they're parked at the finish line)
+		if not h.is_processing():
+			continue
 		# Must be ahead of us
 		var h_score: float = h.laps_completed + h.progress
 		if h_score <= my_score:
@@ -141,6 +152,9 @@ func is_lane_blocked_by_neighbor(target_lane: int) -> bool:
 		if h == self:
 			continue
 		if h.lane_idx != target_lane:
+			continue
+		# Ignore finished horses
+		if not h.is_processing():
 			continue
 		var dist_px: float = my_target_pos.distance_to(h.position)
 		if dist_px < BLOCK_PX:

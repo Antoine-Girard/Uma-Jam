@@ -283,13 +283,18 @@ func _spawn_horses() -> void:
 		var players: Dictionary = NetworkManager.players_connected
 		var i := 0
 		for pid in players.keys():
-			var pname: String = players[pid].get("name", "P%d" % (i + 1))
+			var pdata: Dictionary = players[pid]
+			var pname: String = pdata.get("name", "P%d" % (i + 1))
 			var is_me: bool = (pid == NetworkManager.my_player_id)
-			var cid: String = player_char_id if is_me else BOT_CHAR_IDS[i % BOT_CHAR_IDS.size()]
+			# Use the player's chosen character, fallback to a bot character
+			var cid: String = player_char_id if is_me else pdata.get("character_id", BOT_CHAR_IDS[i % BOT_CHAR_IDS.size()])
 			var horse := _make_horse(i, pname, cid, is_me)
 			_player_horses[pid] = horse
 			if is_me:
 				_my_horse = horse
+			else:
+				# Remote players: don't simulate locally, rely on network updates
+				horse.is_remote = true
 			i += 1
 
 		var bot_names := ["Sakura", "Hana", "Kaze", "Tsuki", "Hoshi"]
@@ -508,25 +513,42 @@ func _process(delta: float) -> void:
 
 func _check_finishers() -> void:
 	for h: HorseRacer in _horses:
-		if h.laps_completed >= LAPS and not _finish_order.has(h):
-			_finish_order.append(h)
-			h.set_process(false)
-			var rank := _finish_order.size()
-			print("[Race] %s finished %s (%d/%d)" % [
-				h.horse_name, _ordinal(rank), rank, _horses.size()])
+		if _finish_order.has(h):
+			continue
+		# Finish = end of bottom straight on final lap (LAPS - 1 completed laps + past finish progress)
+		var finish_prog: float = _track.get_finish_progress(h.lane_idx)
+		var finished := false
+		if h.laps_completed >= LAPS:
+			# Already past a full extra lap — definitely finished
+			finished = true
+		elif h.laps_completed == LAPS - 1 and h.progress >= finish_prog:
+			# On last lap and crossed the finish line at end of bottom straight
+			finished = true
 
-			# Place finished horse on its own lane at the finish line
-			h.lane_idx = rank - 1
-			h.progress = 0.0
-			h.laps_completed = LAPS
-			h.position = _track.get_horse_pos(h.lane_idx, 0.0)
-			h.rotation = _track.get_horse_rot(h.lane_idx, 0.0)
+		if not finished:
+			continue
 
-			if h == _my_horse and not _my_finished:
-				_my_finished = true
-				_lane_btns.visible = false
-				if _skill_panel:
-					_skill_panel.visible = false
+		_finish_order.append(h)
+		h.set_process(false)
+		h.is_blocked = false
+		h.blocked_by = null
+		var rank := _finish_order.size()
+		print("[Race] %s finished %s (%d/%d)" % [
+			h.horse_name, _ordinal(rank), rank, _horses.size()])
+
+		# Place finished horse at the finish line, each on its own lane
+		h.lane_idx = rank - 1
+		h.laps_completed = LAPS - 1
+		var target_finish: float = _track.get_finish_progress(h.lane_idx)
+		h.progress = target_finish
+		h.position = _track.get_horse_pos(h.lane_idx, h.progress)
+		h.rotation = 0.0  # Face right on the straight
+
+		if h == _my_horse and not _my_finished:
+			_my_finished = true
+			_lane_btns.visible = false
+			if _skill_panel:
+				_skill_panel.visible = false
 
 	if _finish_order.size() >= _horses.size():
 		_race_over = true

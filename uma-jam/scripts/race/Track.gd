@@ -30,6 +30,7 @@ func _draw() -> void:
 	draw_polyline(_stadium_pts(HALF_STRAIGHT, outer_r, true), C_BORDER, 2.5, true)
 	draw_polyline(_stadium_pts(HALF_STRAIGHT, INNER_R, true), C_BORDER, 2.5, true)
 
+	_draw_start_line()
 	_draw_finish_line()
 
 func _stadium_pts(hs: float, r: float, closed: bool = false) -> PackedVector2Array:
@@ -47,8 +48,17 @@ func _stadium_pts(hs: float, r: float, closed: bool = false) -> PackedVector2Arr
 		pts.append(pts[0])
 	return pts
 
-func _draw_finish_line() -> void:
+func _draw_start_line() -> void:
+	# Thin white start line on the left side of the bottom straight
 	var x := CENTER.x - HALF_STRAIGHT
+	for lane in LANE_COUNT:
+		var y_top := CENTER.y + INNER_R + lane * LANE_WIDTH
+		var y_bot := CENTER.y + INNER_R + (lane + 1) * LANE_WIDTH
+		draw_line(Vector2(x, y_top), Vector2(x, y_bot), Color(1.0, 1.0, 1.0, 0.5), 2.0)
+
+func _draw_finish_line() -> void:
+	# Checkered finish line on the right side of the bottom straight
+	var x := CENTER.x + HALF_STRAIGHT
 	var checker := LANE_WIDTH / 4.0
 	for lane in LANE_COUNT:
 		var y_top := CENTER.y + INNER_R + lane * LANE_WIDTH
@@ -119,6 +129,15 @@ func get_lane_length(lane_idx: int) -> float:
 	var L_str := 2.0 * HALF_STRAIGHT
 	var L_turn := PI * r
 	return 2.0 * L_str + 2.0 * L_turn
+
+## Returns the progress value (0-1) at the end of the bottom straight for a given lane.
+## This is where the finish line is drawn.
+func get_finish_progress(lane_idx: int) -> float:
+	var r := INNER_R + (lane_idx + 0.5) * LANE_WIDTH
+	var L_str := 2.0 * HALF_STRAIGHT
+	var L_turn := PI * r
+	var L_total := 2.0 * L_str + 2.0 * L_turn
+	return L_str / L_total
 
 func convert_progress(old_lane: int, new_lane: int, prog: float) -> float:
 	var old_r := INNER_R + (old_lane + 0.5) * LANE_WIDTH

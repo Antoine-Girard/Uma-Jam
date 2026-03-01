@@ -20,6 +20,9 @@ func go_to_build() -> void:
 func go_to_profile() -> void:
 	_change_scene("res://scenes/menu/Profile.tscn", "Profile")
 
+func go_to_tutorial() -> void:
+	_change_scene("res://scenes/menu/Tutorial.tscn", "Tutorial")
+
 func go_to_matchmaking() -> void:
 	_change_scene("res://scenes/lobby/Matchmaking.tscn", "Matchmaking")
 
