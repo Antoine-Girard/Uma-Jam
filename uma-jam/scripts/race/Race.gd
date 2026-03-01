@@ -515,14 +515,14 @@ func _check_finishers() -> void:
 	for h: HorseRacer in _horses:
 		if _finish_order.has(h):
 			continue
-		# Finish = end of bottom straight on final lap (LAPS - 1 completed laps + past finish progress)
+		# Finish = 3 full laps + end of bottom straight (finish line on the right)
 		var finish_prog: float = _track.get_finish_progress(h.lane_idx)
 		var finished := false
-		if h.laps_completed >= LAPS:
-			# Already past a full extra lap — definitely finished
+		if h.laps_completed > LAPS:
+			# Way past — definitely finished
 			finished = true
-		elif h.laps_completed == LAPS - 1 and h.progress >= finish_prog:
-			# On last lap and crossed the finish line at end of bottom straight
+		elif h.laps_completed == LAPS and h.progress >= finish_prog:
+			# Completed all laps and crossed the finish line at end of bottom straight
 			finished = true
 
 		if not finished:
@@ -538,7 +538,7 @@ func _check_finishers() -> void:
 
 		# Place finished horse at the finish line, each on its own lane
 		h.lane_idx = rank - 1
-		h.laps_completed = LAPS - 1
+		h.laps_completed = LAPS
 		var target_finish: float = _track.get_finish_progress(h.lane_idx)
 		h.progress = target_finish
 		h.position = _track.get_horse_pos(h.lane_idx, h.progress)
