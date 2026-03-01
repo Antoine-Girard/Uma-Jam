@@ -3,39 +3,39 @@ extends Control
 const MAX_DECK_SIZE = 5
 
 const CHARACTERS = [
-	{ "id": "agnestachyon_icon",   "name": "Agnes Tachyon",   "type": "Endurance",   "skill": SkillData.CHARACTER_PASSIVES["tachyon"].desc },
-	{ "id": "elcondorpasa_icon",   "name": "El Condor Pasa",   "type": "Power", "skill": SkillData.CHARACTER_PASSIVES["el_condor_passa"].desc },
-	{ "id": "goldship_icon",       "name": "Gold Ship",        "type": "Overtake", "skill": SkillData.CHARACTER_PASSIVES["gold_ship"].desc },
-	{ "id": "maruzensky_icon",     "name": "Maruzensky",       "type": "Speed",   "skill": SkillData.CHARACTER_PASSIVES["maruzenski"].desc },
-	{ "id": "oguricap_icon",       "name": "Oguri Cap",        "type": "All in", "skill": SkillData.CHARACTER_PASSIVES["oguri_cap"].desc },
-	{ "id": "sakurabakushino_icon","name": "Sakura Bakushin",  "type": "Sprint",    "skill": SkillData.CHARACTER_PASSIVES["sakura"].desc },
-	{ "id": "specialweek_icon",    "name": "Special Week",     "type": "Power", "skill": SkillData.CHARACTER_PASSIVES["spe_chan"].desc },
-	{ "id": "symbolirudolf_icon",  "name": "Symboli Rudolf",   "type": "Debuff",  "skill": SkillData.CHARACTER_PASSIVES["rudolf"].desc },
+	{ "id": "agnestachyon_icon", "name": "Agnes Tachyon", "type": "Endurance", "skill": SkillData.CHARACTER_PASSIVES["tachyon"].desc },
+	{ "id": "elcondorpasa_icon", "name": "El Condor Pasa", "type": "Power", "skill": SkillData.CHARACTER_PASSIVES["el_condor_passa"].desc },
+	{ "id": "goldship_icon", "name": "Gold Ship", "type": "Overtake", "skill": SkillData.CHARACTER_PASSIVES["gold_ship"].desc },
+	{ "id": "maruzensky_icon", "name": "Maruzensky", "type": "Speed", "skill": SkillData.CHARACTER_PASSIVES["maruzenski"].desc },
+	{ "id": "oguricap_icon", "name": "Oguri Cap", "type": "All in", "skill": SkillData.CHARACTER_PASSIVES["oguri_cap"].desc },
+	{ "id": "sakurabakushino_icon","name": "Sakura Bakushin", "type": "Sprint", "skill": SkillData.CHARACTER_PASSIVES["sakura"].desc },
+	{ "id": "specialweek_icon", "name": "Special Week", "type": "Power", "skill": SkillData.CHARACTER_PASSIVES["spe_chan"].desc },
+	{ "id": "symbolirudolf_icon", "name": "Symboli Rudolf", "type": "Debuff", "skill": SkillData.CHARACTER_PASSIVES["rudolf"].desc },
 ]
 
 const CARDS = [
-	{ "id": "vitesse_active",      "name": "Speed",          "category": "Active",     "img": "tex_support_card_30011", "desc": SkillData.ACTIVE_SKILLS["speed_boost"].desc },
-	{ "id": "acceleration_active", "name": "Acceleration",     "category": "Active",     "img": "tex_support_card_30014", "desc": SkillData.ACTIVE_SKILLS["accel_boost"].desc },
-	{ "id": "endurance_active",    "name": "Endurance Recovery",  "category": "Active",     "img": "tex_support_card_30028", "desc": SkillData.ACTIVE_SKILLS["endurance_recovery"].desc },
-	{ "id": "vitesse_doublement",   "name": "Overtaking Speed", "category": "Condition", "img": "tex_support_card_30043", "desc": SkillData.ACTIVE_SKILLS["speed_while_overtaking"].desc },
-	{ "id": "acceleration_t1",     "name": "Starting Accel",    "category": "Condition", "img": "tex_support_card_30076", "desc": SkillData.ACTIVE_SKILLS["groundwork"].desc },
-	{ "id": "leader_t3",           "name": "Leader's T3 Surge", "category": "Condition", "img": "tex_support_card_30265", "desc": SkillData.ACTIVE_SKILLS["leader_t3_boost"].desc },
-	{ "id": "last_place_t3",       "name": "Comeback Sprint",   "category": "Condition", "img": "tex_support_card_30256", "desc": SkillData.ACTIVE_SKILLS["last_place_t3_boost"].desc },
-	{ "id": "drafting_speed",      "name": "Drafting Burst",    "category": "Condition", "img": "tex_support_card_30057", "desc": SkillData.ACTIVE_SKILLS["drafting_boost"].desc },
+	{ "id": "vitesse_active", "name": "Speed", "category": "Active", "img": "tex_support_card_30011", "desc": SkillData.ACTIVE_SKILLS["speed_boost"].desc },
+	{ "id": "acceleration_active", "name": "Acceleration", "category": "Active", "img": "tex_support_card_30014", "desc": SkillData.ACTIVE_SKILLS["accel_boost"].desc },
+	{ "id": "endurance_active", "name": "Endurance Recovery", "category": "Active", "img": "tex_support_card_30028", "desc": SkillData.ACTIVE_SKILLS["endurance_recovery"].desc },
+	{ "id": "vitesse_doublement", "name": "Overtaking Speed", "category": "Condition", "img": "tex_support_card_30043", "desc": SkillData.ACTIVE_SKILLS["speed_while_overtaking"].desc },
+	{ "id": "acceleration_t1", "name": "Starting Accel", "category": "Condition", "img": "tex_support_card_30076", "desc": SkillData.ACTIVE_SKILLS["groundwork"].desc },
+	{ "id": "leader_t3", "name": "Leader's Surge", "category": "Condition", "img": "tex_support_card_30265", "desc": SkillData.ACTIVE_SKILLS["leader_t3_boost"].desc },
+	{ "id": "last_place_t3", "name": "Comeback Sprint", "category": "Condition", "img": "tex_support_card_30256", "desc": SkillData.ACTIVE_SKILLS["last_place_t3_boost"].desc },
+	{ "id": "drafting_speed", "name": "Drafting Burst", "category": "Condition", "img": "tex_support_card_30057", "desc": SkillData.ACTIVE_SKILLS["drafting_boost"].desc },
 ]
 
 var selected_character: Dictionary = {}
 var deck: Array = []
 
-@onready var char_list        = $MainLayout/LeftPanel/CharScroll/CharList
-@onready var card_grid        = $MainLayout/RightPanel/CardScroll/CardGrid
-@onready var deck_title       = $MainLayout/RightPanel/DeckTitlePanel/DeckTitle
-@onready var deck_slots       = $MainLayout/RightPanel/DeckSlots
-@onready var back_btn         = $TopBar/BackButton
-@onready var portrait_label   = $MainLayout/MiddlePanel/SelectedPortrait/PortraitLabel
+@onready var char_list = $MainLayout/LeftPanel/CharScroll/CharList
+@onready var card_grid = $MainLayout/RightPanel/CardScroll/CardGrid
+@onready var deck_title = $MainLayout/RightPanel/DeckTitlePanel/DeckTitle
+@onready var deck_slots = $MainLayout/RightPanel/DeckSlots
+@onready var back_btn = $TopBar/BackButton
+@onready var portrait_label = $MainLayout/MiddlePanel/SelectedPortrait/PortraitLabel
 @onready var portrait_texture = $MainLayout/MiddlePanel/SelectedPortrait/PortraitTexture
-@onready var selected_name_lb  = $MainLayout/MiddlePanel/SelectedName
-@onready var selected_type_lb  = $MainLayout/MiddlePanel/SelectedType
+@onready var selected_name_lb = $MainLayout/MiddlePanel/SelectedName
+@onready var selected_type_lb = $MainLayout/MiddlePanel/SelectedType
 @onready var selected_skill_lb = $MainLayout/MiddlePanel/SelectedSkill
 
 func _ready():
@@ -59,8 +59,8 @@ func _restore_from_gamedata():
 				var tex = load("res://assets/characters/" + char_data["id"] + ".png")
 				portrait_texture.texture = tex
 				portrait_label.visible = tex == null
-				selected_name_lb.text  = char_data["name"]
-				selected_type_lb.text  = "[ %s ]" % char_data["type"]
+				selected_name_lb.text = char_data["name"]
+				selected_type_lb.text = "[ %s ]" % char_data["type"]
 				selected_skill_lb.text = char_data.get("skill", "")
 				var idx := 0
 				for child in char_list.get_children():
@@ -89,7 +89,7 @@ func _populate_characters():
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.clip_contents = true
 		btn.text = ""
-		btn.tooltip_text = "%s  [ %s ]\n%s" % [char_data["name"], char_data["type"], char_data.get("skill", "")]
+		btn.tooltip_text = "%s [ %s ]\n%s" % [char_data["name"], char_data["type"], char_data.get("skill", "")]
 
 		var tex = TextureRect.new()
 		tex.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -117,15 +117,15 @@ func _on_character_selected(char_data: Dictionary, btn: Button):
 	var tex = load("res://assets/characters/" + char_data["id"] + ".png")
 	portrait_texture.texture = tex
 	portrait_label.visible = tex == null
-	selected_name_lb.text  = char_data["name"]
-	selected_type_lb.text  = "[ %s ]" % char_data["type"]
+	selected_name_lb.text = char_data["name"]
+	selected_type_lb.text = "[ %s ]" % char_data["type"]
 	selected_skill_lb.text = char_data.get("skill", "")
 
 func _card_color(category: String) -> Color:
 	match category:
-		"Active":     return Color(0.18, 0.35, 0.65, 0.45)
+		"Active": return Color(0.18, 0.35, 0.65, 0.45)
 		"Condition": return Color(0.65, 0.38, 0.10, 0.45)
-		_:           return Color(0.25, 0.25, 0.3, 0.45)
+		_: return Color(0.25, 0.25, 0.3, 0.45)
 
 func _populate_cards():
 	for child in card_grid.get_children():
@@ -155,7 +155,7 @@ func _populate_cards():
 			tex.texture = ImageTexture.create_from_image(img)
 			btn.add_child(tex)
 
-		btn.tooltip_text = "%s  [%s]\n%s" % [card_data["name"], card_data["category"], card_data["desc"]]
+		btn.tooltip_text = "%s [%s]\n%s" % [card_data["name"], card_data["category"], card_data["desc"]]
 
 		btn.pressed.connect(_on_card_selected.bind(card_data))
 		card_grid.add_child(btn)
@@ -199,7 +199,7 @@ func _refresh_card_grid():
 		idx += 1
 
 func _refresh_deck_ui():
-	deck_title.text = "MY DECK  (%d / %d)" % [deck.size(), MAX_DECK_SIZE]
+	deck_title.text = "MY DECK (%d / %d)" % [deck.size(), MAX_DECK_SIZE]
 
 	for i in range(MAX_DECK_SIZE):
 		var slot: Panel = deck_slots.get_node("Slot%d" % (i + 1))
@@ -233,7 +233,7 @@ func _refresh_deck_ui():
 				tex_rect.texture = ImageTexture.create_from_image(img)
 				slot.add_child(tex_rect)
 
-			slot.tooltip_text = "%s  [%s]\n%s" % [deck[i]["name"], deck[i]["category"], deck[i]["desc"]]
+			slot.tooltip_text = "%s [%s]\n%s" % [deck[i]["name"], deck[i]["category"], deck[i]["desc"]]
 		else:
 			label.text = "EMPTY"
 			slot.tooltip_text = ""
