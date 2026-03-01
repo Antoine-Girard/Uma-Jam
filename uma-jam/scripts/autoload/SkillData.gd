@@ -14,10 +14,10 @@ const PHASE_LAST_SPURT := 2
 
 const ACTIVE_SKILLS: Dictionary = {
 	"speed_boost": {
-		"label":           "Boost de vitesse",
+		"label":           "Speed Boost",
 		"short":           "VIT",
 		"icon":            "tex_support_card_30011",
-		"desc":            "Augmente la vitesse de +12 pendant 4s",
+		"desc":            "Increases speed by +12 for 4s",
 		"speed_bonus":     12.0,
 		"accel_bonus":     0.0,
 		"recovery_bonus":  0.0,
@@ -26,10 +26,10 @@ const ACTIVE_SKILLS: Dictionary = {
 		"condition":       "",
 	},
 	"accel_boost": {
-		"label":           "Boost d'accel",
+		"label":           "Accel Boost",
 		"short":           "ACC",
 		"icon":            "tex_support_card_30014",
-		"desc":            "Augmente l'acceleration de +8 pendant 3s",
+		"desc":            "Increases acceleration by +8 for 3s",
 		"speed_bonus":     0.0,
 		"accel_bonus":     8.0,
 		"recovery_bonus":  0.0,
@@ -38,10 +38,10 @@ const ACTIVE_SKILLS: Dictionary = {
 		"condition":       "",
 	},
 	"endurance_recovery": {
-		"label":           "Recup. endurance",
+		"label":           "Endurance Recovery",
 		"short":           "END",
 		"icon":            "tex_support_card_30028",
-		"desc":            "Recupere de l'endurance (+1/s pendant 30s)",
+		"desc":            "Recovers endurance (+1/s for 30s)",
 		"speed_bonus":     0.0,
 		"accel_bonus":     0.0,
 		"recovery_bonus":  1.0,
@@ -50,10 +50,10 @@ const ACTIVE_SKILLS: Dictionary = {
 		"condition":       "",
 	},
 	"speed_while_overtaking": {
-		"label":           "Vitesse doublant",
+		"label":           "Overtaking Speed",
 		"short":           "OVT",
 		"icon":            "tex_support_card_30043",
-		"desc":            "Vitesse +12 pendant 5s\nCondition: en train de doubler",
+		"desc":            "Speed +12 for 5s\nCondition: overtaking",
 		"speed_bonus":     12.0,
 		"accel_bonus":     0.0,
 		"recovery_bonus":  0.0,
@@ -65,7 +65,7 @@ const ACTIVE_SKILLS: Dictionary = {
 		"label":           "Groundwork",
 		"short":           "GND",
 		"icon":            "tex_support_card_30076",
-		"desc":            "Vitesse +8, Accel +8 pendant 5s\nCondition: Tour 1 uniquement",
+		"desc":            "Speed +8, Accel +8 for 5s\nCondition: Lap 1 only",
 		"speed_bonus":     8.0,
 		"accel_bonus":     8.0,
 		"recovery_bonus":  0.0,
@@ -76,12 +76,12 @@ const ACTIVE_SKILLS: Dictionary = {
 }
 
 const CHARACTER_PASSIVES: Dictionary = {
-	"tachyon":        { "label": "Endurance Rush",       "desc": "Gagne de la vitesse en activant un skill d'endurance (+3 vitesse, 4s)" },
-	"el_condor_passa": { "label": "Last Spurt Condor",    "desc": "Gagne de l'accélération en last spurt entre 2e et 4e (+2 accél, conditionnel permanent)" },
-	"gold_ship":       { "label": "Overtaking Rush",      "desc": "Gagne de la vitesse en doublant (+2 vitesse, 5s)" },
-	"maruzenski":      { "label": "Chasing Glory",        "desc": "Gagne de la vitesse si pas 1ère (+1 vitesse permanent), mais +1 coût d'endurance sur tous les skills" },
-	"oguri_cap":       { "label": "Final Stretch",        "desc": "Vitesse et accélération augmentées dans la dernière ligne droite (+4 vitesse/accél, conditionnel permanent)" },
-	"sakura":          { "label": "Mid-Race Surge",       "desc": "Gagne de la vitesse en T2 si pas 1ère (+1 vitesse, 10s, déclenche une seule fois)" },
-	"spe_chan":         { "label": "Underdog Sprint",      "desc": "Gagne de l'accélération en last spurt entre 4e et 6e (+3 accél, conditionnel permanent)" },
-	"rudolf":          { "label": "Pressure from Behind", "desc": "Débuff le cheval directement devant sur le même couloir (-2 vitesse, 3s)" },
+	"tachyon":        { "label": "Endurance Rush",       "desc": "Gains speed when activating an endurance skill (+3 speed, 4s)" },
+	"el_condor_passa": { "label": "Last Spurt Condor",    "desc": "Gains acceleration in last spurt between 2nd and 4th (+2 accel, conditional permanent)" },
+	"gold_ship":       { "label": "Overtaking Rush",      "desc": "Gains speed when overtaking (+2 speed, 5s)" },
+	"maruzenski":      { "label": "Chasing Glory",        "desc": "Gains speed if not 1st (+1 speed permanent), but +1 endurance cost on all skills" },
+	"oguri_cap":       { "label": "Final Stretch",        "desc": "Speed and acceleration increased in the final straight (+4 speed/accel, conditional permanent)" },
+	"sakura":          { "label": "Mid-Race Surge",       "desc": "Gains speed in T2 if not 1st (+1 speed, 10s, triggers once)" },
+	"spe_chan":         { "label": "Underdog Sprint",      "desc": "Gains acceleration in last spurt between 4th and 6th (+3 accel, conditional permanent)" },
+	"rudolf":          { "label": "Pressure from Behind", "desc": "Debuffs the horse directly ahead in the same lane (-2 speed, 3s)" },
 }

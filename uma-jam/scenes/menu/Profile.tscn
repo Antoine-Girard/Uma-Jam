@@ -61,14 +61,14 @@ theme_override_constants/separation = 16
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
-text = "Votre pseudo :"
+text = "Your name:"
 
 [node name="NameInput" type="LineEdit" parent="Center/VBox"]
 layout_mode = 2
 custom_minimum_size = Vector2(0, 50)
 theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("input_bg")
-placeholder_text = "Entrez votre pseudo..."
+placeholder_text = "Enter your name..."
 max_length = 20
 
 [node name="SaveBtn" type="Button" parent="Center/VBox"]
@@ -79,7 +79,7 @@ theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("btn_save")
 theme_override_styles/hover = SubResource("btn_save")
 theme_override_styles/pressed = SubResource("btn_save")
-text = "SAUVEGARDER"
+text = "SAVE"
 
 [node name="SaveLabel" type="Label" parent="Center/VBox"]
 layout_mode = 2
@@ -98,4 +98,4 @@ offset_right = 200.0
 offset_bottom = -20.0
 grow_vertical = 0
 theme_override_font_sizes/font_size = 20
-text = "RETOUR"
+text = "BACK"

@@ -96,7 +96,7 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("back_normal")
 theme_override_styles/hover = SubResource("back_hover")
-text = "← RETOUR"
+text = "← BACK"
 
 [node name="Title" type="Label" parent="TopBar"]
 size_flags_horizontal = 3
@@ -143,7 +143,7 @@ theme_override_styles/panel = SubResource("title_accent")
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.7, 0.78, 1.0, 1)
-text = "PERSONNAGE"
+text = "CHARACTER"
 horizontal_alignment = 1
 
 [node name="CharScroll" type="ScrollContainer" parent="MainLayout/LeftPanel"]
@@ -174,7 +174,7 @@ theme_override_styles/panel = SubResource("title_accent")
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(0.7, 0.78, 1.0, 1)
-text = "SELECTIONNE"
+text = "SELECTED"
 horizontal_alignment = 1
 
 [node name="SelectedPortrait" type="Panel" parent="MainLayout/MiddlePanel"]
@@ -202,7 +202,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_font_sizes/font_size = 13
 theme_override_colors/font_color = Color(0.5, 0.5, 0.6, 0.7)
-text = "— aucun —"
+text = "— none —"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -246,7 +246,7 @@ theme_override_styles/panel = SubResource("title_accent")
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.7, 0.78, 1.0, 1)
-text = "MON DECK  (0 / 5)"
+text = "MY DECK  (0 / 5)"
 horizontal_alignment = 1
 
 [node name="DeckSlots" type="HBoxContainer" parent="MainLayout/RightPanel"]
@@ -267,7 +267,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0.4, 0.4, 0.5, 0.6)
-text = "VIDE"
+text = "EMPTY"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
@@ -284,7 +284,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0.4, 0.4, 0.5, 0.6)
-text = "VIDE"
+text = "EMPTY"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
@@ -301,7 +301,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0.4, 0.4, 0.5, 0.6)
-text = "VIDE"
+text = "EMPTY"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
@@ -318,7 +318,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0.4, 0.4, 0.5, 0.6)
-text = "VIDE"
+text = "EMPTY"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
@@ -335,7 +335,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0.4, 0.4, 0.5, 0.6)
-text = "VIDE"
+text = "EMPTY"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
@@ -352,7 +352,7 @@ theme_override_styles/panel = SubResource("title_accent")
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(0.7, 0.78, 1.0, 1)
-text = "CARTES DISPONIBLES"
+text = "AVAILABLE CARDS"
 horizontal_alignment = 1
 
 [node name="CardScroll" type="ScrollContainer" parent="MainLayout/RightPanel"]

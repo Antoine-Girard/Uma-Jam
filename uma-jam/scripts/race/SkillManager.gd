@@ -1,7 +1,6 @@
 class_name SkillManager
 extends Node
 
-
 signal skill_activated(skill_id: String)
 
 signal passive_triggered(char_id: String, passive_label: String, bonus_desc: String)
@@ -12,13 +11,11 @@ signal endurance_changed(new_val: float, old_val: float)
 
 signal debuff_applied(target_horse: Node, speed_penalty: float, duration: float)
 
-
 var horse_ref:       Node    = null
 var race_ref:        Node2D  = null
 var all_horses:      Array   = []
 var character_id:    String  = ""
 var is_local_player: bool    = false
-
 
 var endurance:       float = SkillData.MAX_ENDURANCE
 
@@ -27,7 +24,6 @@ var _recovery_timer: float = 0.0
 var _buffs: Array[Dictionary] = []
 var _buff_counter: int = 0
 
-
 var _passive_state: Dictionary = {
 	"prev_rank":        0,
 	"overtaking":       false,
@@ -35,7 +31,6 @@ var _passive_state: Dictionary = {
 	"sakura_triggered": false,
 	"rudolf_cooldown":  0.0,
 }
-
 
 func init(horse: Node, race: Node2D, horses: Array,
 		char_id: String, local: bool) -> void:
@@ -46,10 +41,9 @@ func init(horse: Node, race: Node2D, horses: Array,
 	is_local_player = local
 	endurance       = SkillData.MAX_ENDURANCE
 	_passive_state["prev_rank"] = horses.size()
-	print("[SkillManager] %s | perso: %s | local: %s" % [
+	print("[SkillManager] %s | character: %s | local: %s" % [
 		horse_ref.horse_name if horse_ref else "?",
 		character_id, str(is_local_player)])
-
 
 func update(delta: float) -> void:
 	if horse_ref == null:
@@ -58,20 +52,19 @@ func update(delta: float) -> void:
 	_tick_endurance_recovery(delta)
 	_process_passives(delta)
 
-
 func activate_skill(skill_id: String) -> bool:
 	if not is_local_player:
-		push_warning("[SkillManager] activate_skill('%s') ignoré – pas le joueur local." % skill_id)
+		push_warning("[SkillManager] activate_skill('%s') ignored – not the local player." % skill_id)
 		return false
 
 	if not SkillData.ACTIVE_SKILLS.has(skill_id):
-		push_warning("[SkillManager] Skill inconnu : '%s'" % skill_id)
+		push_warning("[SkillManager] Unknown skill: '%s'" % skill_id)
 		return false
 
 	var def: Dictionary = SkillData.ACTIVE_SKILLS[skill_id]
 
 	if not _check_skill_condition(def["condition"]):
-		print("[SkillManager] Condition '%s' non remplie pour : %s" % [def["condition"], skill_id])
+		print("[SkillManager] Condition '%s' not met for: %s" % [def["condition"], skill_id])
 		return false
 
 	var cost: float = def["endurance_cost"]
@@ -79,7 +72,7 @@ func activate_skill(skill_id: String) -> bool:
 		cost += 1.0
 
 	if endurance < cost:
-		print("[SkillManager] Endurance insuffisante pour %s (besoin %.1f, actuel %.1f)" % [
+		print("[SkillManager] Insufficient endurance for %s (need %.1f, current %.1f)" % [
 			skill_id, cost, endurance])
 		return false
 
@@ -96,7 +89,7 @@ func activate_skill(skill_id: String) -> bool:
 	})
 
 	skill_activated.emit(skill_id)
-	print("[SkillManager] Skill activé : %s | endurance restante : %.1f" % [skill_id, endurance])
+	print("[SkillManager] Skill activated: %s | remaining endurance: %.1f" % [skill_id, endurance])
 
 	if character_id == "tachyon" and skill_id == "endurance_recovery":
 		_apply_buff({
@@ -108,10 +101,9 @@ func activate_skill(skill_id: String) -> bool:
 			"timer":          4.0,
 			"is_conditional": false,
 		})
-		passive_triggered.emit("tachyon", "Endurance Rush", "+12 vitesse pendant 4s")
+		passive_triggered.emit("tachyon", "Endurance Rush", "+12 speed for 4s")
 
 	return true
-
 
 func get_speed_bonus() -> float:
 	var total := 0.0
@@ -119,13 +111,11 @@ func get_speed_bonus() -> float:
 		total += b.get("speed_bonus", 0.0)
 	return total
 
-
 func get_accel_bonus() -> float:
 	var total := 0.0
 	for b: Dictionary in _buffs:
 		total += b.get("accel_bonus", 0.0)
 	return total
-
 
 func get_effective_max_speed(race_phase: int) -> float:
 	var base := SkillData.LAST_SPURT_SPEED \
@@ -133,25 +123,20 @@ func get_effective_max_speed(race_phase: int) -> float:
 		else SkillData.BASE_SPEED
 	return base + get_speed_bonus()
 
-
 func get_effective_accel() -> float:
 	return SkillData.BASE_ACCEL + get_accel_bonus()
-
 
 func get_endurance() -> float:
 	return endurance
 
-
 func is_overtaking() -> bool:
 	return _passive_state.get("overtaking", false)
-
 
 func get_active_buff_ids() -> Array[String]:
 	var ids: Array[String] = []
 	for b: Dictionary in _buffs:
 		ids.append(b["id"])
 	return ids
-
 
 func apply_debuff(buff_id: String, speed_penalty: float, duration: float) -> void:
 	_apply_buff({
@@ -163,11 +148,10 @@ func apply_debuff(buff_id: String, speed_penalty: float, duration: float) -> voi
 		"timer":          duration,
 		"is_conditional": false,
 	})
-	print("[SkillManager] Debuff '%s' appliqué sur %s : -%.1f vitesse, %.1fs" % [
+	print("[SkillManager] Debuff '%s' applied on %s: -%.1f speed, %.1fs" % [
 		buff_id,
 		horse_ref.horse_name if horse_ref else "?",
 		speed_penalty, duration])
-
 
 func _tick_buffs(delta: float) -> void:
 	var to_remove: Array[int] = []
@@ -180,10 +164,9 @@ func _tick_buffs(delta: float) -> void:
 			to_remove.append(i)
 	for i in range(to_remove.size() - 1, -1, -1):
 		var b: Dictionary = _buffs[to_remove[i]]
-		print("[SkillManager] Buff expiré : %s" % b["id"])
+		print("[SkillManager] Buff expired: %s" % b["id"])
 		buff_expired.emit(b["id"])
 		_buffs.remove_at(to_remove[i])
-
 
 func _tick_endurance_recovery(delta: float) -> void:
 	if endurance >= SkillData.MAX_ENDURANCE:
@@ -196,21 +179,17 @@ func _tick_endurance_recovery(delta: float) -> void:
 		_set_endurance(minf(endurance + SkillData.BASE_RECOVERY_RATE + bonus,
 				SkillData.MAX_ENDURANCE))
 
-
 func _get_recovery_bonus() -> float:
 	var total := 0.0
 	for b: Dictionary in _buffs:
 		total += b.get("recovery_bonus", 0.0)
 	return total
 
-
 func _set_endurance(val: float) -> void:
 	var prev := endurance
 	endurance = clampf(val, 0.0, SkillData.MAX_ENDURANCE)
 	if not is_equal_approx(endurance, prev):
 		endurance_changed.emit(endurance, prev)
-
-
 
 func _process_passives(delta: float) -> void:
 	var rank  := _get_my_rank()
@@ -236,12 +215,10 @@ func _process_passives(delta: float) -> void:
 		"spe_chan":         _passive_spe_chan(rank, phase)
 		"rudolf":          _passive_rudolf(delta)
 
-
 func _passive_el_condor(rank: int, phase: int) -> void:
 	var cond := (phase == SkillData.PHASE_LAST_SPURT and rank >= 2 and rank <= 4)
 	_set_conditional_buff("passive_el_condor",
-		0.0, 8.0, 0.0, cond, "Last Spurt Condor", "+2 accél (last spurt, 2e-4e)")
-
+		0.0, 8.0, 0.0, cond, "Last Spurt Condor", "+2 accel (last spurt, 2nd-4th)")
 
 func _passive_gold_ship() -> void:
 	if _passive_state["overtaking"] and not _has_buff("passive_gold_ship"):
@@ -254,22 +231,19 @@ func _passive_gold_ship() -> void:
 			"timer":          5.0,
 			"is_conditional": false,
 		})
-		passive_triggered.emit("gold_ship", "Overtaking Rush", "+2 vitesse pendant 5s")
-
+		passive_triggered.emit("gold_ship", "Overtaking Rush", "+2 speed for 5s")
 
 func _passive_maruzenski(rank: int) -> void:
 	var cond := rank > 1
 	_set_conditional_buff("passive_maruzenski",
 		4.0, 0.0, 0.0, cond,
-		"Chasing Glory", "+4 vitesse (pas 1ère)")
-
+		"Chasing Glory", "+4 speed (not 1st)")
 
 func _passive_oguri_cap(phase: int) -> void:
 	var cond := (phase == SkillData.PHASE_LAST_SPURT)
 	_set_conditional_buff("passive_oguri_cap",
 		4.0, 4.0, 0.0, cond,
-		"Final Stretch", "+4 vitesse/accél (dernière ligne droite)")
-
+		"Final Stretch", "+4 speed/accel (final straight)")
 
 func _passive_sakura(rank: int, phase: int) -> void:
 	if _passive_state["sakura_triggered"]:
@@ -285,14 +259,12 @@ func _passive_sakura(rank: int, phase: int) -> void:
 			"timer":          10.0,
 			"is_conditional": false,
 		})
-		passive_triggered.emit("sakura", "Mid-Race Surge", "+4 vitesse pendant 10s (T2, pas 1ère)")
-
+		passive_triggered.emit("sakura", "Mid-Race Surge", "+4 speed for 10s (T2, not 1st)")
 
 func _passive_spe_chan(rank: int, phase: int) -> void:
 	var cond := (phase == SkillData.PHASE_LAST_SPURT and rank >= 4 and rank <= 6)
 	_set_conditional_buff("passive_spe_chan",
-		0.0, 3.0, 0.0, cond, "Underdog Sprint", "+3 accél (last spurt, 4e-6e)")
-
+		0.0, 3.0, 0.0, cond, "Underdog Sprint", "+3 accel (last spurt, 4th-6th)")
 
 const _RUDOLF_INTERVAL := 3.0
 
@@ -316,10 +288,9 @@ func _passive_rudolf(delta: float) -> void:
 		target_sm.apply_debuff("rudolf_debuff", 2.0, _RUDOLF_INTERVAL)
 		debuff_applied.emit(target, 2.0, _RUDOLF_INTERVAL)
 		passive_triggered.emit("rudolf", "Pressure from Behind",
-			"Débuff %s : -2 vitesse pendant %.0fs" % [target.horse_name, _RUDOLF_INTERVAL])
+			"Debuff %s: -2 speed for %.0fs" % [target.horse_name, _RUDOLF_INTERVAL])
 
 	_passive_state["rudolf_cooldown"] = _RUDOLF_INTERVAL
-
 
 func _apply_buff(buff: Dictionary) -> void:
 	_buff_counter += 1
@@ -331,13 +302,11 @@ func _apply_buff(buff: Dictionary) -> void:
 				break
 	_buffs.append(buff)
 
-
 func _has_buff(buff_id: String) -> bool:
 	for b: Dictionary in _buffs:
 		if b["id"] == buff_id:
 			return true
 	return false
-
 
 func _set_conditional_buff(
 		buff_id: String,
@@ -364,14 +333,12 @@ func _set_conditional_buff(
 				buff_expired.emit(buff_id)
 				break
 
-
 func _check_skill_condition(condition: String) -> bool:
 	match condition:
 		"":           return true
 		"overtaking": return _passive_state.get("overtaking", false)
 		"phase_t1":   return _get_race_phase() == SkillData.PHASE_T1
 		_:            return true
-
 
 func _get_my_rank() -> int:
 	if horse_ref == null:
@@ -388,7 +355,6 @@ func _get_my_rank() -> int:
 			rank += 1
 	return rank
 
-
 func _get_race_phase() -> int:
 	if horse_ref == null:
 		return SkillData.PHASE_T1
@@ -402,7 +368,6 @@ func _get_race_phase() -> int:
 		return SkillData.PHASE_T2
 	else:
 		return SkillData.PHASE_T1
-
 
 func _find_horse_directly_ahead() -> Node:
 	if horse_ref == null:

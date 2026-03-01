@@ -89,7 +89,7 @@ theme_override_font_sizes/font_size = 14
 theme_override_styles/normal = SubResource("btn_race")
 theme_override_styles/hover = SubResource("btn_race")
 theme_override_styles/pressed = SubResource("btn_race")
-text = "RACE (IA)"
+text = "RACE (AI)"
 
 [node name="TopRight" type="HBoxContainer" parent="."]
 layout_mode = 1
@@ -110,7 +110,7 @@ theme_override_font_sizes/font_size = 14
 theme_override_styles/normal = SubResource("btn_quit")
 theme_override_styles/hover = SubResource("btn_quit")
 theme_override_styles/pressed = SubResource("btn_quit")
-text = "QUITTER"
+text = "QUIT"
 
 [node name="BottomBar" type="HBoxContainer" parent="." unique_id=1895386965]
 layout_mode = 1

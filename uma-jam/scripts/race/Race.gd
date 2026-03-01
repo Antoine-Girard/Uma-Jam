@@ -12,7 +12,6 @@ const BOT_CHAR_IDS := ["tachyon", "el_condor_passa", "gold_ship", "maruzenski",
 @onready var _track:        Node2D  = $Track
 @onready var _horses_node:  Node2D  = $Horses
 
-# UI refs
 @onready var _lap_label:    Label   = $UI/LapPanel/VBox/LapLabel
 @onready var _pos_label:    Label   = $UI/PosPanel/VBox/PosLabel
 @onready var _pos_sub:      Label   = $UI/PosPanel/VBox/PosSubLabel
@@ -48,23 +47,18 @@ var _tooltip_label: Label             = null
 var _tooltip_timer: float             = 0.0
 var _tooltip_btn: Button              = null
 
-# Stats panel
 var _stats_panel: PanelContainer      = null
 var _speed_label: Label               = null
 var _max_speed_label: Label           = null
 var _accel_label: Label               = null
 
-# Multiplayer mapping: player_id (String) -> HorseRacer
 var _player_horses: Dictionary        = {}
 
-# Position sync
 var _sync_timer: float               = 0.0
-const SYNC_INTERVAL: float           = 0.2  # envoyer position toutes les 200ms
+const SYNC_INTERVAL: float           = 0.2
 
-# Menu pause/abandon
 var _pause_overlay: Control          = null
 var _paused: bool                    = false
-
 
 func _ready() -> void:
 	_inner_btn.pressed.connect(_on_inner)
@@ -76,10 +70,8 @@ func _ready() -> void:
 	_skip_btn.visible = false
 	_skip_btn.modulate.a = 0.0
 	_countdown.visible = false
-	# Cacher les panels pendant l'intro
 	$UI/LapPanel.modulate.a = 0.0
 	$UI/PosPanel.modulate.a = 0.0
-	# Connecter les signaux multijoueur si online
 	if NetworkManager.is_online:
 		NetworkManager.lane_change_received.connect(_on_remote_lane_change)
 		NetworkManager.position_update_received.connect(_on_remote_position_update)
@@ -92,11 +84,7 @@ func _ready() -> void:
 	_build_pause_menu()
 	_show_intro()
 
-
-# ─── Intro joueurs (style Clash Royale) ──────────────────────────────────────
-
 func _show_intro() -> void:
-	# Fond semi-transparent
 	var bg := ColorRect.new()
 	bg.name = "IntroBG"
 	bg.color = Color(0.0, 0.0, 0.05, 0.75)
@@ -106,7 +94,6 @@ func _show_intro() -> void:
 	bg.offset_bottom = 0
 	_ui.add_child(bg)
 
-	# Container centré
 	var center := VBoxContainer.new()
 	center.anchor_left = 0.5
 	center.anchor_right = 0.5
@@ -122,9 +109,8 @@ func _show_intro() -> void:
 	center.add_theme_constant_override("separation", 6)
 	bg.add_child(center)
 
-	# Titre
 	var title := Label.new()
-	title.text = "COUREURS"
+	title.text = "RACERS"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 28)
 	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.25))
@@ -135,7 +121,6 @@ func _show_intro() -> void:
 	sep.custom_minimum_size = Vector2(0, 8)
 	center.add_child(sep)
 
-	# Créer les cartes joueurs (cachées)
 	var cards: Array[Control] = []
 	for h: HorseRacer in _horses:
 		var card := _make_player_card(h)
@@ -143,13 +128,11 @@ func _show_intro() -> void:
 		center.add_child(card)
 		cards.append(card)
 
-	# Animation : titre d'abord
 	await get_tree().create_timer(0.3).timeout
 	var t_tw := create_tween()
 	t_tw.tween_property(title, "modulate:a", 1.0, 0.3)
 	await get_tree().create_timer(0.4).timeout
 
-	# Puis chaque carte une par une
 	for card: Control in cards:
 		var tw := create_tween().set_parallel(true)
 		tw.tween_property(card, "modulate:a", 1.0, 0.25)
@@ -157,28 +140,22 @@ func _show_intro() -> void:
 			.from(card.position.x + 60.0).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 		await get_tree().create_timer(0.18).timeout
 
-	# Attendre un peu que le joueur voit tout
 	await get_tree().create_timer(1.5).timeout
 
-	# Fade out l'intro
 	var fade := create_tween()
 	fade.tween_property(bg, "modulate:a", 0.0, 0.5)
 	await fade.finished
 	bg.queue_free()
 
-	# Afficher les panels de course
 	var panel_tw := create_tween().set_parallel(true)
 	panel_tw.tween_property($UI/LapPanel, "modulate:a", 1.0, 0.3)
 	panel_tw.tween_property($UI/PosPanel, "modulate:a", 1.0, 0.3)
 	if _stats_panel:
 		panel_tw.tween_property(_stats_panel, "modulate:a", 1.0, 0.3)
 
-	# Lancer le countdown
 	_start_countdown()
 
-
 func _make_player_card(horse: HorseRacer) -> PanelContainer:
-	# Style du panel
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.12, 0.12, 0.18, 0.85)
 	style.corner_radius_top_left = 10
@@ -190,7 +167,6 @@ func _make_player_card(horse: HorseRacer) -> PanelContainer:
 	style.content_margin_top = 8.0
 	style.content_margin_bottom = 8.0
 
-	# Bordure colorée à gauche selon le cheval
 	var horse_color: Color = HorseRacer.HORSE_COLORS[horse.color_idx % HorseRacer.HORSE_COLORS.size()]
 	style.border_width_left = 5
 	style.border_color = horse_color
@@ -204,7 +180,6 @@ func _make_player_card(horse: HorseRacer) -> PanelContainer:
 	hbox.alignment = BoxContainer.ALIGNMENT_BEGIN
 	panel.add_child(hbox)
 
-	# Placeholder image du personnage (carré coloré)
 	var img_frame := PanelContainer.new()
 	var img_style := StyleBoxFlat.new()
 	img_style.bg_color = horse_color.darkened(0.2)
@@ -216,7 +191,6 @@ func _make_player_card(horse: HorseRacer) -> PanelContainer:
 	img_frame.custom_minimum_size = Vector2(36, 36)
 	hbox.add_child(img_frame)
 
-	# Icône placeholder "?" au centre
 	var img_label := Label.new()
 	img_label.text = "?"
 	img_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -225,7 +199,6 @@ func _make_player_card(horse: HorseRacer) -> PanelContainer:
 	img_label.add_theme_color_override("font_color", Color.WHITE)
 	img_frame.add_child(img_label)
 
-	# Nom du joueur
 	var name_label := Label.new()
 	name_label.text = horse.horse_name
 	name_label.add_theme_font_size_override("font_size", 20)
@@ -235,7 +208,6 @@ func _make_player_card(horse: HorseRacer) -> PanelContainer:
 		name_label.add_theme_color_override("font_color", Color(0.5, 1.0, 0.65))
 	hbox.add_child(name_label)
 
-	# Trophées
 	var trophy_hbox := HBoxContainer.new()
 	trophy_hbox.add_theme_constant_override("separation", 4)
 	hbox.add_child(trophy_hbox)
@@ -254,9 +226,6 @@ func _make_player_card(horse: HorseRacer) -> PanelContainer:
 
 	return panel
 
-
-# ─── Countdown ────────────────────────────────────────────────────────────────
-
 func _start_countdown() -> void:
 	_countdown.visible = true
 	_countdown.modulate.a = 1.0
@@ -268,7 +237,7 @@ func _start_countdown() -> void:
 		tween.tween_property(_countdown, "scale", Vector2.ONE, 0.4).set_ease(Tween.EASE_OUT)
 		await get_tree().create_timer(0.85).timeout
 
-	_countdown.text = "GO !"
+	_countdown.text = "GO!"
 	_countdown.add_theme_color_override("font_color", Color(1.0, 0.85, 0.2))
 	var tween := create_tween()
 	tween.tween_property(_countdown, "modulate:a", 0.0, 0.6).set_delay(0.3)
@@ -277,7 +246,6 @@ func _start_countdown() -> void:
 	_lane_btns.visible = true
 	if _skill_panel:
 		_skill_panel.visible = true
-	# Pas de bouton ACCELERER en matchmaking online
 	if NetworkManager.is_online:
 		_skip_btn.visible = false
 	else:
@@ -285,7 +253,6 @@ func _start_countdown() -> void:
 		var fade := create_tween()
 		fade.tween_property(_skip_btn, "modulate:a", 1.0, 0.5).set_delay(1.0)
 	_unfreeze_horses()
-
 
 func _freeze_horses() -> void:
 	for h: HorseRacer in _horses:
@@ -295,18 +262,13 @@ func _unfreeze_horses() -> void:
 	for h: HorseRacer in _horses:
 		h.set_process(true)
 
-
-# ─── Spawn ────────────────────────────────────────────────────────────────────
-
 func _spawn_horses() -> void:
 	var player_char_id: String = GameData.character_id
 
-	# Seed déterministe pour que tous les clients aient les mêmes vitesses de bots
 	if NetworkManager.race_seed != 0:
 		seed(NetworkManager.race_seed)
 
 	if NetworkManager.is_online and not NetworkManager.players_connected.is_empty():
-		# Mode online : spawn les vrais joueurs
 		var players: Dictionary = NetworkManager.players_connected
 		var i := 0
 		for pid in players.keys():
@@ -319,7 +281,6 @@ func _spawn_horses() -> void:
 				_my_horse = horse
 			i += 1
 
-		# Remplir avec des bots jusqu'à 6
 		var bot_names := ["Sakura", "Hana", "Kaze", "Tsuki", "Hoshi"]
 		var bot_idx := 0
 		while _horses.size() < MAX_PLAYERS:
@@ -327,7 +288,6 @@ func _spawn_horses() -> void:
 			_make_horse(_horses.size(), bot_names[bot_idx % bot_names.size()] + " (bot)", bot_cid, false)
 			bot_idx += 1
 	else:
-		# Mode solo / test
 		if player_char_id == "":
 			player_char_id = "tachyon"
 		_my_horse = _make_horse(0, GameData.player_name, player_char_id, true)
@@ -335,7 +295,6 @@ func _spawn_horses() -> void:
 		for b in range(5):
 			var bot_cid: String = BOT_CHAR_IDS[(b + 1) % BOT_CHAR_IDS.size()]
 			_make_horse(b + 1, bot_names[b] + " (bot)", bot_cid, false)
-
 
 func _make_horse(lane: int, pname: String, char_id: String = "", is_local: bool = false) -> HorseRacer:
 	var horse := HorseRacer.new()
@@ -359,12 +318,8 @@ func _make_horse(lane: int, pname: String, char_id: String = "", is_local: bool 
 
 	return horse
 
-
 func _init_skill_manager(sm: SkillManager, horse: HorseRacer, char_id: String, is_local: bool) -> void:
 	sm.init(horse, self, _horses, char_id, is_local)
-
-
-# ─── Controles ────────────────────────────────────────────────────────────────
 
 func _on_inner() -> void:
 	if _my_horse and not _my_finished and _race_started:
@@ -385,7 +340,7 @@ func _on_skip() -> void:
 	_lane_btns.visible = false
 	if _skill_panel:
 		_skill_panel.visible = false
-	_skip_btn.text = "ACCELERATION..."
+	_skip_btn.text = "ACCELERATING..."
 	_skip_btn.disabled = true
 	for h: HorseRacer in _horses:
 		if not _finish_order.has(h):
@@ -415,9 +370,6 @@ func _on_menu() -> void:
 		NetworkManager.disconnect_from_relay()
 	GameManager.go_to_main_menu()
 
-
-# ─── Réseau : réception ─────────────────────────────────────────────────────
-
 func _on_remote_lane_change(player_id: String, direction: String) -> void:
 	if player_id in _player_horses:
 		var horse: HorseRacer = _player_horses[player_id]
@@ -426,34 +378,27 @@ func _on_remote_lane_change(player_id: String, direction: String) -> void:
 		elif direction == "outer":
 			horse.move_outer()
 
-
 func _on_remote_position_update(player_id: String, progress_val: float, laps: int, lane: int, speed: float) -> void:
 	if player_id in _player_horses:
 		var horse: HorseRacer = _player_horses[player_id]
-		# Corriger la position du cheval distant
 		horse.progress = progress_val
 		horse.laps_completed = laps
 		horse.lane_idx = lane
 		horse.current_speed = speed
-
 
 func _on_remote_skill_use(player_id: String, skill_id: String) -> void:
 	if player_id in _player_horses:
 		var horse: HorseRacer = _player_horses[player_id]
 		if horse.skill_manager != null:
 			horse.skill_manager.activate_skill(skill_id)
-			print("[Race] Joueur %s a utilisé le skill '%s'" % [player_id, skill_id])
-
+			print("[Race] Player %s used skill '%s'" % [player_id, skill_id])
 
 func _on_remote_player_left(player_id: String) -> void:
 	if player_id in _player_horses:
-		# Le cheval continue tout seul (comme un bot)
-		print("[Race] Joueur %s déconnecté, son cheval continue en bot" % player_id)
+		print("[Race] Player %s disconnected, their horse continues as bot" % player_id)
 		_player_horses.erase(player_id)
 
-
 func _input(event: InputEvent) -> void:
-	# Menu pause avec ESC
 	if event.is_action_pressed("ui_cancel") and _race_started and not _race_over:
 		if _paused:
 			_on_resume()
@@ -473,9 +418,6 @@ func _input(event: InputEvent) -> void:
 		if NetworkManager.is_online:
 			NetworkManager.send_lane_change("outer")
 
-
-# ─── Boucle principale ───────────────────────────────────────────────────────
-
 func _process(delta: float) -> void:
 	if not _race_started or _race_over:
 		return
@@ -487,7 +429,6 @@ func _process(delta: float) -> void:
 	_update_endurance_ui()
 	_update_stats_ui()
 	_update_tooltip(delta)
-	# Envoi périodique de la position au relay
 	if NetworkManager.is_online and _my_horse and not _my_finished:
 		_sync_timer += delta
 		if _sync_timer >= SYNC_INTERVAL:
@@ -499,13 +440,12 @@ func _process(delta: float) -> void:
 				_my_horse.current_speed
 			)
 
-
 func _check_finishers() -> void:
 	for h: HorseRacer in _horses:
 		if h.laps_completed >= LAPS and not _finish_order.has(h):
 			_finish_order.append(h)
 			h.set_process(false)
-			print("[Race] %s termine %s (%d/%d)" % [
+			print("[Race] %s finished %s (%d/%d)" % [
 				h.horse_name, _ordinal(_finish_order.size()),
 				_finish_order.size(), _horses.size()])
 
@@ -519,7 +459,6 @@ func _check_finishers() -> void:
 		_race_over = true
 		_show_results()
 
-
 func _update_ui() -> void:
 	if _my_horse == null:
 		return
@@ -529,7 +468,7 @@ func _update_ui() -> void:
 
 	var my_rank := _get_rank(_my_horse)
 	_pos_label.text = _ordinal(my_rank)
-	_pos_sub.text = "/ %d coureurs" % _horses.size()
+	_pos_sub.text = "/ %d racers" % _horses.size()
 
 	match my_rank:
 		1: _pos_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.15))
@@ -544,7 +483,6 @@ func _update_ui() -> void:
 		_inner_btn.modulate.a = 0.4 if _inner_btn.disabled else 1.0
 		_outer_btn.modulate.a = 0.4 if _outer_btn.disabled else 1.0
 
-
 func _get_rank(horse: HorseRacer) -> int:
 	var idx := _finish_order.find(horse)
 	if idx >= 0:
@@ -557,35 +495,24 @@ func _get_rank(horse: HorseRacer) -> int:
 			rank += 1
 	return rank
 
-
 func _ordinal(n: int) -> String:
-	if n == 1:
-		return "1er"
-	return "%deme" % n
+	match n:
+		1: return "1st"
+		2: return "2nd"
+		3: return "3rd"
+		_: return "%dth" % n
 
-
-# ─── Skill system helpers (used by SkillManager) ─────────────────────────────
-
-## Returns the 1-based rank of the given horse (1 = first).
-## Called by SkillManager._get_my_rank() to avoid duplicating logic.
 func get_horse_rank(horse: HorseRacer) -> int:
 	return _get_rank(horse)
 
-
-## Returns the total number of laps in this race.
-## Called by SkillManager._get_race_phase() for phase calculation.
 func get_total_laps() -> int:
 	return LAPS
-
-
-# ─── Skill UI ─────────────────────────────────────────────────────────────────
 
 func _build_skill_ui() -> void:
 	var skill_ids: Array = GameData.get_skill_ids()
 	if skill_ids.is_empty():
 		skill_ids = ["speed_boost", "accel_boost", "endurance_recovery", "speed_while_overtaking", "groundwork"]
 
-	# ─── Skill panel (bas de l'écran) ─────────────────────────────────
 	_skill_panel = PanelContainer.new()
 	_skill_panel.name = "SkillPanel"
 	var panel_style := StyleBoxFlat.new()
@@ -610,7 +537,6 @@ func _build_skill_ui() -> void:
 	vbox.add_theme_constant_override("separation", 4)
 	_skill_panel.add_child(vbox)
 
-	# Barre d'endurance
 	var endurance_hbox := HBoxContainer.new()
 	endurance_hbox.add_theme_constant_override("separation", 8)
 	vbox.add_child(endurance_hbox)
@@ -645,7 +571,6 @@ func _build_skill_ui() -> void:
 	_endurance_label.custom_minimum_size = Vector2(55, 0)
 	endurance_hbox.add_child(_endurance_label)
 
-	# Boutons de skills avec icônes
 	var btn_hbox := HBoxContainer.new()
 	btn_hbox.add_theme_constant_override("separation", 6)
 	btn_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -662,7 +587,6 @@ func _build_skill_ui() -> void:
 		btn.custom_minimum_size = Vector2(0, 70)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
-		# Style du bouton
 		var btn_style := StyleBoxFlat.new()
 		btn_style.bg_color = Color(0.12, 0.2, 0.4, 0.9)
 		btn_style.set_corner_radius_all(8)
@@ -688,14 +612,12 @@ func _build_skill_ui() -> void:
 		btn_disabled.border_color = Color(0.3, 0.3, 0.4, 0.3)
 		btn.add_theme_stylebox_override("disabled", btn_disabled)
 
-		# Contenu du bouton : VBox avec icône + texte
 		var btn_content := VBoxContainer.new()
 		btn_content.alignment = BoxContainer.ALIGNMENT_CENTER
 		btn_content.add_theme_constant_override("separation", 2)
 		btn_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		btn.add_child(btn_content)
 
-		# Icône de la carte
 		var icon_path := "res://assets/cards/%s.png" % def.get("icon", "")
 		var tex := load(icon_path) as Texture2D
 		if tex:
@@ -707,7 +629,6 @@ func _build_skill_ui() -> void:
 			icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			btn_content.add_child(icon)
 
-		# Label court
 		var short_label := Label.new()
 		short_label.text = "%s  -%d" % [def.get("short", "?"), int(def["endurance_cost"])]
 		short_label.add_theme_font_size_override("font_size", 11)
@@ -726,7 +647,6 @@ func _build_skill_ui() -> void:
 	_ui.add_child(_skill_panel)
 	_skill_panel.visible = false
 
-	# ─── Tooltip (affiché au hover sur un skill) ──────────────────────
 	_skill_tooltip = PanelContainer.new()
 	_skill_tooltip.name = "SkillTooltip"
 	var tt_style := StyleBoxFlat.new()
@@ -758,9 +678,7 @@ func _build_skill_ui() -> void:
 	_skill_tooltip.add_child(_tooltip_label)
 	_ui.add_child(_skill_tooltip)
 
-	# ─── Stats panel (gauche, sous le tour) ──────────────────────────
 	_build_stats_panel()
-
 
 func _on_skill_button(skill_id: String) -> void:
 	if _my_horse == null or _my_finished or not _race_started:
@@ -769,10 +687,9 @@ func _on_skill_button(skill_id: String) -> void:
 		return
 	var ok: bool = _my_horse.skill_manager.activate_skill(skill_id)
 	if ok:
-		print("[Race] Skill '%s' activé !" % skill_id)
+		print("[Race] Skill '%s' activated!" % skill_id)
 		if NetworkManager.is_online:
 			NetworkManager.send_skill_use(skill_id)
-
 
 func _on_skill_hover_start(btn: Button, skill_id: String) -> void:
 	_tooltip_btn = btn
@@ -780,10 +697,9 @@ func _on_skill_hover_start(btn: Button, skill_id: String) -> void:
 	if not SkillData.ACTIVE_SKILLS.has(skill_id):
 		return
 	var def: Dictionary = SkillData.ACTIVE_SKILLS[skill_id]
-	var text := "%s\n%s\nDuree: %.0fs | Cout: -%d endurance" % [
+	var text := "%s\n%s\nDuration: %.0fs | Cost: -%d endurance" % [
 		def["label"], def.get("desc", ""), def["duration"], int(def["endurance_cost"])]
 	_tooltip_label.text = text
-
 
 func _on_skill_hover_end() -> void:
 	_tooltip_btn = null
@@ -791,16 +707,12 @@ func _on_skill_hover_end() -> void:
 	if _skill_tooltip:
 		_skill_tooltip.visible = false
 
-
 func _update_tooltip(delta: float) -> void:
 	if _tooltip_btn == null or _skill_tooltip == null:
 		return
 	_tooltip_timer += delta
 	if _tooltip_timer >= 1.0 and not _skill_tooltip.visible:
 		_skill_tooltip.visible = true
-
-
-# ─── Stats panel ─────────────────────────────────────────────────────────────
 
 func _build_stats_panel() -> void:
 	_stats_panel = PanelContainer.new()
@@ -832,7 +744,7 @@ func _build_stats_panel() -> void:
 	vbox.add_child(title)
 
 	_speed_label = Label.new()
-	_speed_label.text = "Vitesse: 0"
+	_speed_label.text = "Speed: 0"
 	_speed_label.add_theme_font_size_override("font_size", 14)
 	_speed_label.add_theme_color_override("font_color", Color(0.4, 1.0, 0.5))
 	vbox.add_child(_speed_label)
@@ -852,7 +764,6 @@ func _build_stats_panel() -> void:
 	_ui.add_child(_stats_panel)
 	_stats_panel.modulate.a = 0.0
 
-
 func _update_stats_ui() -> void:
 	if _my_horse == null or _stats_panel == null:
 		return
@@ -864,11 +775,10 @@ func _update_stats_ui() -> void:
 		effective_max = _my_horse.max_speed + (speed_bonus / SkillData.BASE_SPEED) * _my_horse.max_speed
 		effective_accel = _my_horse.acceleration + (accel_bonus / SkillData.BASE_ACCEL) * _my_horse.acceleration
 
-	_speed_label.text = "Vitesse: %.1f" % _my_horse.current_speed
+	_speed_label.text = "Speed: %.1f" % _my_horse.current_speed
 	_max_speed_label.text = "Max: %.1f" % effective_max
 	_accel_label.text = "Accel: %.1f" % effective_accel
 
-	# Colorer en vert si boosté
 	if effective_max > _my_horse.max_speed:
 		_max_speed_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
 	else:
@@ -877,7 +787,6 @@ func _update_stats_ui() -> void:
 		_accel_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
 	else:
 		_accel_label.add_theme_color_override("font_color", Color(0.6, 0.8, 1.0))
-
 
 func _update_endurance_ui() -> void:
 	if _my_horse == null or _my_horse.skill_manager == null:
@@ -908,9 +817,6 @@ func _update_endurance_ui() -> void:
 				if sm.character_id == "maruzenski":
 					cost += 1.0
 				btn.disabled = end_val < cost
-
-
-# ─── Menu Pause / Abandon ────────────────────────────────────────────────────
 
 func _build_pause_menu() -> void:
 	_pause_overlay = Control.new()
@@ -946,7 +852,7 @@ func _build_pause_menu() -> void:
 	center.add_child(title)
 
 	var resume_btn := Button.new()
-	resume_btn.text = "REPRENDRE"
+	resume_btn.text = "RESUME"
 	resume_btn.custom_minimum_size = Vector2(250, 50)
 	resume_btn.add_theme_font_size_override("font_size", 20)
 	var resume_style := StyleBoxFlat.new()
@@ -959,7 +865,7 @@ func _build_pause_menu() -> void:
 	center.add_child(resume_btn)
 
 	var abandon_btn := Button.new()
-	abandon_btn.text = "ABANDONNER"
+	abandon_btn.text = "FORFEIT"
 	abandon_btn.custom_minimum_size = Vector2(250, 50)
 	abandon_btn.add_theme_font_size_override("font_size", 20)
 	var abandon_style := StyleBoxFlat.new()
@@ -973,11 +879,9 @@ func _build_pause_menu() -> void:
 
 	_ui.add_child(_pause_overlay)
 
-
 func _on_resume() -> void:
 	_pause_overlay.visible = false
 	_paused = false
-
 
 func _on_abandon() -> void:
 	_pause_overlay.visible = false
@@ -986,9 +890,6 @@ func _on_abandon() -> void:
 		NetworkManager.disconnect_from_relay()
 	GameManager.go_to_main_menu()
 
-
-# ─── Fin de course ───────────────────────────────────────────────────────────
-
 func _show_results() -> void:
 	_skip_btn.visible = false
 
@@ -996,38 +897,37 @@ func _show_results() -> void:
 
 	match my_rank:
 		1:
-			_win_title.text = "VICTOIRE !"
+			_win_title.text = "VICTORY!"
 			_win_title.add_theme_color_override("font_color", Color(1, 0.85, 0.2))
 		2, 3:
-			_win_title.text = "BIEN JOUE !"
+			_win_title.text = "WELL PLAYED!"
 			_win_title.add_theme_color_override("font_color", Color(0.7, 0.85, 1.0))
 		_:
-			_win_title.text = "COURSE TERMINEE"
+			_win_title.text = "RACE FINISHED"
 			_win_title.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
 
-	_win_name.text = "%s termine %s" % [_finish_order[0].horse_name, _ordinal(1)]
+	_win_name.text = "%s finished %s" % [_finish_order[0].horse_name, _ordinal(1)]
 
 	var lines := ""
 	for i in _finish_order.size():
 		var h: HorseRacer = _finish_order[i]
 		var medal := ""
 		match i:
-			0: medal = "  [OR]"
-			1: medal = "  [ARGENT]"
+			0: medal = "  [GOLD]"
+			1: medal = "  [SILVER]"
 			2: medal = "  [BRONZE]"
 		var marker := "  >>  " if h == _my_horse else "      "
 		lines += "%s%s%s%s\n" % [_ordinal(i + 1), marker, h.horse_name, medal]
 	_rankings.text = lines
 
-	# En matchmaking : pas de retry, juste retour menu
 	if NetworkManager.is_online:
-		_retry_btn.text = "RETOUR AU MENU"
+		_retry_btn.text = "BACK TO MENU"
 	else:
-		_retry_btn.text = "REJOUER"
+		_retry_btn.text = "REPLAY"
 
 	_end_overlay.modulate.a = 0.0
 	_end_overlay.visible = true
 	var tween := create_tween()
 	tween.tween_property(_end_overlay, "modulate:a", 1.0, 0.6)
 
-	print("[Race] Course terminee ! Gagnant: %s" % _finish_order[0].horse_name)
+	print("[Race] Race finished! Winner: %s" % _finish_order[0].horse_name)

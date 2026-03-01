@@ -1,10 +1,7 @@
 extends Node
 
-## URL du serveur relay — à changer après déploiement sur Render
 const RELAY_URL := "wss://uma-jam.onrender.com"
 const MAX_PLAYERS := 6
-
-# ─── État ─────────────────────────────────────────────────────────────────────
 
 enum State { DISCONNECTED, CONNECTING, IN_LOBBY, IN_RACE }
 var state: State = State.DISCONNECTED
@@ -13,12 +10,10 @@ var solo_mode: bool = false
 var is_online: bool = false
 var my_player_id: String = ""
 var race_seed: int = 0
-var players_connected: Dictionary = {}  # player_id -> { "name", "slot" }
+var players_connected: Dictionary = {}
 
 var _ws: WebSocketPeer = null
 var _was_open: bool = false
-
-# ─── Signaux ──────────────────────────────────────────────────────────────────
 
 signal connected_to_relay
 signal connection_failed
@@ -29,11 +24,8 @@ signal position_update_received(player_id: String, progress_val: float, laps: in
 signal skill_use_received(player_id: String, skill_id: String)
 signal player_left(player_id: String)
 
-# ─── Lifecycle ────────────────────────────────────────────────────────────────
-
 func _ready() -> void:
-	print("[NetworkManager] Initialisé")
-
+	print("[NetworkManager] Initialized")
 
 func _process(_delta: float) -> void:
 	if _ws == null:
@@ -47,12 +39,12 @@ func _process(_delta: float) -> void:
 		_was_open = true
 		is_online = true
 		state = State.IN_LOBBY
-		print("[NetworkManager] Connecté au relay!")
+		print("[NetworkManager] Connected to relay!")
 		connected_to_relay.emit()
 
 	elif ws_state == WebSocketPeer.STATE_CLOSED:
 		var code := _ws.get_close_code()
-		print("[NetworkManager] Déconnecté du relay (code %d)" % code)
+		print("[NetworkManager] Disconnected from relay (code %d)" % code)
 		var was_connecting := (state == State.CONNECTING)
 		_ws = null
 		_was_open = false
@@ -62,31 +54,26 @@ func _process(_delta: float) -> void:
 			connection_failed.emit()
 		return
 
-	# Lire les messages entrants
 	while _ws != null and _ws.get_available_packet_count() > 0:
 		var raw := _ws.get_packet().get_string_from_utf8()
 		var parsed = JSON.parse_string(raw)
 		if parsed is Dictionary:
 			_handle_message(parsed)
 
-
-# ─── Connexion ────────────────────────────────────────────────────────────────
-
 func connect_to_relay() -> void:
 	if _ws != null:
 		disconnect_from_relay()
 
-	print("[NetworkManager] Connexion à %s..." % RELAY_URL)
+	print("[NetworkManager] Connecting to %s..." % RELAY_URL)
 	_ws = WebSocketPeer.new()
 	var err := _ws.connect_to_url(RELAY_URL)
 	if err != OK:
-		print("[NetworkManager] Erreur de connexion: %d" % err)
+		print("[NetworkManager] Connection error: %d" % err)
 		_ws = null
 		connection_failed.emit()
 		return
 	state = State.CONNECTING
 	_was_open = false
-
 
 func disconnect_from_relay() -> void:
 	if _ws != null:
@@ -99,32 +86,24 @@ func disconnect_from_relay() -> void:
 	my_player_id = ""
 	players_connected.clear()
 
-
-## Ping HTTP pour réveiller le serveur Render (appelé depuis MainMenu)
 func wake_up_server() -> void:
 	var http := HTTPRequest.new()
 	add_child(http)
 	var url := RELAY_URL.replace("ws://", "http://").replace("wss://", "https://")
 	http.request(url)
 	http.request_completed.connect(func(_result, _code, _headers, _body):
-		print("[NetworkManager] Serveur pingé (wake-up)")
+		print("[NetworkManager] Server pinged (wake-up)")
 		http.queue_free()
 	)
-
-
-# ─── Envoi de messages ────────────────────────────────────────────────────────
 
 func find_match() -> void:
 	_send({"type": "find_match", "player_name": GameData.player_name})
 
-
 func send_lane_change(direction: String) -> void:
 	_send({"type": "lane_change", "direction": direction})
 
-
 func send_skill_use(skill_id: String) -> void:
 	_send({"type": "skill_use", "skill_id": skill_id})
-
 
 func send_position_update(progress_val: float, laps: int, lane: int, speed: float) -> void:
 	_send({
@@ -135,13 +114,9 @@ func send_position_update(progress_val: float, laps: int, lane: int, speed: floa
 		"speed": speed
 	})
 
-
 func _send(data: Dictionary) -> void:
 	if _ws != null and _ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
 		_ws.send_text(JSON.stringify(data))
-
-
-# ─── Réception de messages ────────────────────────────────────────────────────
 
 func _handle_message(data: Dictionary) -> void:
 	var msg_type: String = data.get("type", "")
@@ -149,7 +124,7 @@ func _handle_message(data: Dictionary) -> void:
 	match msg_type:
 		"joined":
 			my_player_id = str(data.get("player_id", ""))
-			print("[NetworkManager] Rejoint la room %s (ID: %s)" % [
+			print("[NetworkManager] Joined room %s (ID: %s)" % [
 				str(data.get("room_id", "")), my_player_id])
 
 		"lobby_update":
@@ -179,7 +154,7 @@ func _handle_message(data: Dictionary) -> void:
 				}
 
 			state = State.IN_RACE
-			print("[NetworkManager] Course lancée! seed=%d, %d joueurs" % [
+			print("[NetworkManager] Race started! seed=%d, %d players" % [
 				race_seed, players_arr.size()])
 			race_starting.emit(race_seed, players_arr)
 
@@ -205,14 +180,11 @@ func _handle_message(data: Dictionary) -> void:
 			var pid: String = str(data.get("player_id", ""))
 			if pid in players_connected:
 				players_connected.erase(pid)
-			print("[NetworkManager] Joueur %s a quitté" % pid)
+			print("[NetworkManager] Player %s left" % pid)
 			player_left.emit(pid)
 
 		"error":
-			print("[NetworkManager] Erreur serveur: %s" % str(data.get("message", "")))
-
-
-# ─── Helpers ──────────────────────────────────────────────────────────────────
+			print("[NetworkManager] Server error: %s" % str(data.get("message", "")))
 
 func get_player_count() -> int:
 	return players_connected.size()

@@ -65,7 +65,7 @@ layout_mode = 2
 layout_mode = 2
 theme_override_colors/font_color = Color(0.75, 0.75, 0.75, 1)
 theme_override_font_sizes/font_size = 13
-text = "TOUR"
+text = "LAP"
 
 [node name="LapLabel" type="Label" parent="UI/LapPanel/VBox" unique_id=878137209]
 layout_mode = 2
@@ -92,14 +92,14 @@ alignment = 1
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 34
-text = "1er"
+text = "1st"
 horizontal_alignment = 1
 
 [node name="PosSubLabel" type="Label" parent="UI/PosPanel/VBox" unique_id=702421699]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 0.7)
 theme_override_font_sizes/font_size = 14
-text = "/ 6 coureurs"
+text = "/ 6 racers"
 horizontal_alignment = 1
 
 [node name="LaneButtons" type="HBoxContainer" parent="UI" unique_id=1231287161]
@@ -135,7 +135,7 @@ alignment = 1
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 0.85)
 theme_override_font_sizes/font_size = 14
-text = "Couloir"
+text = "Lane"
 horizontal_alignment = 1
 
 [node name="LaneNum" type="Label" parent="UI/LaneButtons/LaneInfo" unique_id=1848761193]
@@ -170,7 +170,7 @@ theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("btn_style")
 theme_override_styles/pressed = SubResource("btn_style")
 theme_override_styles/hover = SubResource("btn_style")
-text = "ACCELERER >>"
+text = "ACCELERATE >>"
 
 [node name="Countdown" type="Label" parent="UI" unique_id=86827883]
 anchors_preset = 8
@@ -219,7 +219,7 @@ theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.7)
 theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 52
-text = "VICTOIRE"
+text = "VICTORY"
 horizontal_alignment = 1
 
 [node name="WinName" type="Label" parent="UI/EndOverlay/VBox" unique_id=950518307]
@@ -254,7 +254,7 @@ theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("btn_style")
 theme_override_styles/pressed = SubResource("btn_style")
 theme_override_styles/hover = SubResource("btn_style")
-text = "RECOMMENCER"
+text = "RESTART"
 
 [node name="Sep3" type="Control" parent="UI/EndOverlay/VBox" unique_id=1704163610]
 custom_minimum_size = Vector2(0, 8)
@@ -268,4 +268,4 @@ theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("btn_style")
 theme_override_styles/pressed = SubResource("btn_style")
 theme_override_styles/hover = SubResource("btn_style")
-text = "RETOUR AU MENU"
+text = "BACK TO MENU"

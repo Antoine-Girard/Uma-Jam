@@ -1,6 +1,5 @@
 extends Node
 
-
 const CHARACTER_MAP: Dictionary = {
 	"agnestachyon_icon":   "tachyon",
 	"elcondorpasa_icon":   "el_condor_passa",
@@ -29,19 +28,19 @@ var selected_deck: Array = []
 var selected_skill_ids: Array = []
 
 var player_id: int = 0
-var player_name: String = "Joueur"
+var player_name: String = "Player"
 
 var current_match_players: Array = []
 
 func _ready():
-	print("[GameData] Initialisé")
+	print("[GameData] Initialized")
 
 func select_character(char_name: String, build_icon_id: String) -> void:
 	selected_character = char_name
 	selected_icon_id = build_icon_id
 	character_id = CHARACTER_MAP.get(build_icon_id, "")
 	character_passive = SkillData.CHARACTER_PASSIVES.get(character_id, {}).get("label", "")
-	print("[GameData] Personnage: %s | id: %s | passif: %s" % [char_name, character_id, character_passive])
+	print("[GameData] Character: %s | id: %s | passive: %s" % [char_name, character_id, character_passive])
 
 func set_deck(cards: Array) -> void:
 	selected_deck = cards.duplicate()
@@ -50,7 +49,7 @@ func set_deck(cards: Array) -> void:
 		var skill_id: String = CARD_MAP.get(card.get("id", ""), "")
 		if skill_id != "":
 			selected_skill_ids.append(skill_id)
-	print("[GameData] Deck (%d cartes) | skills: %s" % [selected_deck.size(), str(selected_skill_ids)])
+	print("[GameData] Deck (%d cards) | skills: %s" % [selected_deck.size(), str(selected_skill_ids)])
 
 func get_character_info() -> Dictionary:
 	return {
@@ -73,4 +72,4 @@ func reset() -> void:
 	selected_deck = []
 	selected_skill_ids = []
 	current_match_players = []
-	print("[GameData] Données réinitialisées")
+	print("[GameData] Data reset")
