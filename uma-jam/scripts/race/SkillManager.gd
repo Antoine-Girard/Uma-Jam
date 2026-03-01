@@ -114,11 +114,11 @@ func activate_skill(skill_id: String) -> bool:
 	if character_id == "tachyon" and skill_id == "endurance_recovery":
 		_apply_buff({
 			"id":             "passive_tachyon",
-			"speed_bonus":    12.0,
+			"speed_bonus":    10.0,
 			"accel_bonus":    0.0,
 			"recovery_bonus": 0.0,
-			"duration":       4.0,
-			"timer":          4.0,
+			"duration":       5.0,
+			"timer":          5.0,
 			"is_conditional": false,
 		})
 		passive_triggered.emit("tachyon", "Endurance Rush", "+12 speed for 4s")
@@ -262,7 +262,7 @@ func _passive_maruzenski(rank: int) -> void:
 func _passive_oguri_cap(phase: int) -> void:
 	var cond := (phase == SkillData.PHASE_LAST_SPURT)
 	_set_conditional_buff("passive_oguri_cap",
-		4.0, 4.0, 0.0, cond,
+		12.0, 8.0, 0.0, cond,
 		"Final Stretch", "+4 speed/accel (final straight)")
 
 func _passive_sakura(rank: int, phase: int) -> void:
@@ -305,7 +305,7 @@ func _passive_rudolf(delta: float) -> void:
 			break
 
 	if target_sm != null:
-		target_sm.apply_debuff("rudolf_debuff", 2.0, _RUDOLF_INTERVAL)
+		target_sm.apply_debuff("rudolf_debuff", 5.0, _RUDOLF_INTERVAL)
 		debuff_applied.emit(target, 2.0, _RUDOLF_INTERVAL)
 		passive_triggered.emit("rudolf", "Pressure from Behind",
 			"Debuff %s: -2 speed for %.0fs" % [target.horse_name, _RUDOLF_INTERVAL])
@@ -358,6 +358,9 @@ func check_skill_condition(condition: String) -> bool:
 		"":           return true
 		"overtaking": return _passive_state.get("overtaking", false)
 		"phase_t1":   return _get_race_phase() == SkillData.PHASE_T1
+		"first_at_t3": return _get_race_phase() == SkillData.PHASE_LAST_SPURT and _get_my_rank() == 1
+		"last_at_t3":  return _get_race_phase() == SkillData.PHASE_LAST_SPURT and _get_my_rank() == all_horses.size()
+		"drafting":    return _is_drafting()
 		_:            return true
 
 func _get_my_rank() -> int:
@@ -406,6 +409,16 @@ func _find_horse_directly_ahead() -> Node:
 			best_score = s
 			best       = h
 	return best
+
+const DRAFTING_MAX_DISTANCE := 0.12  # max distance (in lap fraction) to count as drafting
+
+func _is_drafting() -> bool:
+	var ahead := _find_horse_directly_ahead()
+	if ahead == null:
+		return false
+	var my_score: float = horse_ref.laps_completed + horse_ref.progress
+	var ahead_score: float = ahead.laps_completed + ahead.progress
+	return (ahead_score - my_score) <= DRAFTING_MAX_DISTANCE
 
 
 # ─── Bot AI ──────────────────────────────────────────────────────────────────

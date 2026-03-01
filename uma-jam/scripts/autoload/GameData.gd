@@ -28,6 +28,9 @@ const CARD_MAP: Dictionary = {
 	"endurance_active":    "endurance_recovery",
 	"vitesse_doublement":  "speed_while_overtaking",
 	"acceleration_t1":     "groundwork",
+	"leader_t3":           "leader_t3_boost",
+	"last_place_t3":       "last_place_t3_boost",
+	"drafting_speed":      "drafting_boost",
 }
 
 var selected_character: String = ""
