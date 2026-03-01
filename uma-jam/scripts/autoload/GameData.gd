@@ -11,6 +11,17 @@ const CHARACTER_MAP: Dictionary = {
 	"symbolirudolf_icon":  "rudolf",
 }
 
+const CHAR_ID_TO_ICON: Dictionary = {
+	"tachyon":         "agnestachyon_icon",
+	"el_condor_passa": "elcondorpasa_icon",
+	"gold_ship":       "goldship_icon",
+	"maruzenski":      "maruzensky_icon",
+	"oguri_cap":       "oguricap_icon",
+	"sakura":          "sakurabakushino_icon",
+	"spe_chan":         "specialweek_icon",
+	"rudolf":          "symbolirudolf_icon",
+}
+
 const CARD_MAP: Dictionary = {
 	"vitesse_active":      "speed_boost",
 	"acceleration_active": "accel_boost",

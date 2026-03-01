@@ -24,6 +24,12 @@ var _recovery_timer: float = 0.0
 var _buffs: Array[Dictionary] = []
 var _buff_counter: int = 0
 
+# Bot AI
+var is_bot: bool             = false
+var bot_skill_ids: Array     = []
+var _bot_next_skill: String  = ""
+var _bot_cooldown: float     = 0.0
+
 var _passive_state: Dictionary = {
 	"prev_rank":        0,
 	"overtaking":       false,
@@ -51,11 +57,25 @@ func update(delta: float) -> void:
 	_tick_buffs(delta)
 	_tick_endurance_recovery(delta)
 	_process_passives(delta)
+	if is_bot:
+		_bot_ai(delta)
 
 func activate_skill(skill_id: String) -> bool:
-	if not is_local_player:
-		push_warning("[SkillManager] activate_skill('%s') ignored – not the local player." % skill_id)
-		return false
+	if not is_local_player and not is_bot:
+		# Remote player skills are applied directly
+		if not SkillData.ACTIVE_SKILLS.has(skill_id):
+			return false
+		var def: Dictionary = SkillData.ACTIVE_SKILLS[skill_id]
+		_apply_buff({
+			"id":             skill_id,
+			"speed_bonus":    def["speed_bonus"],
+			"accel_bonus":    def["accel_bonus"],
+			"recovery_bonus": def["recovery_bonus"],
+			"duration":       def["duration"],
+			"timer":          def["duration"],
+			"is_conditional": false,
+		})
+		return true
 
 	if not SkillData.ACTIVE_SKILLS.has(skill_id):
 		push_warning("[SkillManager] Unknown skill: '%s'" % skill_id)
@@ -63,7 +83,7 @@ func activate_skill(skill_id: String) -> bool:
 
 	var def: Dictionary = SkillData.ACTIVE_SKILLS[skill_id]
 
-	if not _check_skill_condition(def["condition"]):
+	if not check_skill_condition(def["condition"]):
 		print("[SkillManager] Condition '%s' not met for: %s" % [def["condition"], skill_id])
 		return false
 
@@ -333,7 +353,7 @@ func _set_conditional_buff(
 				buff_expired.emit(buff_id)
 				break
 
-func _check_skill_condition(condition: String) -> bool:
+func check_skill_condition(condition: String) -> bool:
 	match condition:
 		"":           return true
 		"overtaking": return _passive_state.get("overtaking", false)
@@ -386,3 +406,37 @@ func _find_horse_directly_ahead() -> Node:
 			best_score = s
 			best       = h
 	return best
+
+
+# ─── Bot AI ──────────────────────────────────────────────────────────────────
+
+func init_bot(skill_ids: Array) -> void:
+	is_bot = true
+	is_local_player = true  # allow skill activation
+	bot_skill_ids = skill_ids.duplicate()
+	_bot_pick_next_skill()
+	_bot_cooldown = randf_range(3.0, 8.0)  # wait before first skill
+
+
+func _bot_pick_next_skill() -> void:
+	if bot_skill_ids.is_empty():
+		_bot_next_skill = ""
+		return
+	_bot_next_skill = bot_skill_ids[randi() % bot_skill_ids.size()]
+
+
+func _bot_ai(delta: float) -> void:
+	if _bot_next_skill == "":
+		return
+	_bot_cooldown -= delta
+	if _bot_cooldown > 0.0:
+		return
+
+	# Try to use the skill
+	var ok := activate_skill(_bot_next_skill)
+	if ok:
+		_bot_pick_next_skill()
+		_bot_cooldown = randf_range(4.0, 10.0)
+	else:
+		# Condition not met or not enough endurance, try again soon
+		_bot_cooldown = 1.0

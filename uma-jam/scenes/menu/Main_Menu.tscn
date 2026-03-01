@@ -1,6 +1,8 @@
-[gd_scene format=3 uid="uid://bu0t4itqre12"]
+[gd_scene load_steps=5 format=3 uid="uid://bu0t4itqre12"]
 
 [ext_resource type="Script" uid="uid://da8cqvlta11xt" path="res://scripts/menu/MainMenu.gd" id="1_abc12"]
+[ext_resource type="Texture2D" path="res://assets/Backgrounds/uma-musume-pretty-derby-anime-race-1nrcprlohf088zs6.jpg" id="bg_1"]
+[ext_resource type="FontFile" path="res://assets/fonts/RacingSansOne-Regular.ttf" id="font_racing"]
 
 [sub_resource type="StyleBoxFlat" id="btn_matchmaking"]
 bg_color = Color(0.15, 0.45, 0.2, 0.95)
@@ -44,15 +46,43 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_abc12")
 
-[node name="Title" type="Label" parent="." unique_id=1580551420]
+[node name="Background" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("bg_1")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="TitleContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_top = 40.0
-offset_bottom = 120.0
+offset_top = 30.0
+offset_bottom = 160.0
 grow_horizontal = 2
-theme_override_font_sizes/font_size = 48
-text = "UMA RACING"
+alignment = 1
+
+[node name="Title" type="Label" parent="TitleContainer" unique_id=1580551420]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
+theme_override_colors/font_outline_color = Color(0.1, 0.05, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("font_racing")
+theme_override_font_sizes/font_size = 62
+text = "UMA-JAM-RACING"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="TitleContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.85, 0.75, 0.85)
+theme_override_colors/font_outline_color = Color(0.05, 0.02, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 18
+text = "a umamusume fan game"
 horizontal_alignment = 1
 
 [node name="MatchmakingBtn" type="Button" parent="."]

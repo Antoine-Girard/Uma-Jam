@@ -1,6 +1,6 @@
 extends Node2D
 
-const CENTER        := Vector2(640.0, 360.0)
+const CENTER        := Vector2(640.0, 300.0)
 const HALF_STRAIGHT := 260.0
 const INNER_R       := 110.0
 const LANE_WIDTH    := 28.0
@@ -119,3 +119,33 @@ func get_lane_length(lane_idx: int) -> float:
 	var L_str := 2.0 * HALF_STRAIGHT
 	var L_turn := PI * r
 	return 2.0 * L_str + 2.0 * L_turn
+
+func convert_progress(old_lane: int, new_lane: int, prog: float) -> float:
+	var old_r := INNER_R + (old_lane + 0.5) * LANE_WIDTH
+	var new_r := INNER_R + (new_lane + 0.5) * LANE_WIDTH
+	var L_str := 2.0 * HALF_STRAIGHT
+	var old_turn := PI * old_r
+	var new_turn := PI * new_r
+	var old_total := 2.0 * L_str + 2.0 * old_turn
+	var new_total := 2.0 * L_str + 2.0 * new_turn
+
+	var s := fmod(prog, 1.0) * old_total
+	var new_s: float
+
+	if s < L_str:
+		# Bottom straight — same distance
+		new_s = s
+	elif s < L_str + old_turn:
+		# Right turn — preserve angle
+		var angle := (s - L_str) / old_r
+		new_s = L_str + angle * new_r
+	elif s < 2.0 * L_str + old_turn:
+		# Top straight — same offset from turn end
+		var straight_dist := s - (L_str + old_turn)
+		new_s = L_str + new_turn + straight_dist
+	else:
+		# Left turn — preserve angle
+		var angle := (s - 2.0 * L_str - old_turn) / old_r
+		new_s = 2.0 * L_str + new_turn + angle * new_r
+
+	return new_s / new_total
