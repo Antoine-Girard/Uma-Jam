@@ -114,14 +114,14 @@ func activate_skill(skill_id: String) -> bool:
 	if character_id == "tachyon" and skill_id == "endurance_recovery":
 		_apply_buff({
 			"id":             "passive_tachyon",
-			"speed_bonus":    10.0,
+			"speed_bonus":    6.0,
 			"accel_bonus":    0.0,
 			"recovery_bonus": 0.0,
 			"duration":       5.0,
 			"timer":          5.0,
 			"is_conditional": false,
 		})
-		passive_triggered.emit("tachyon", "Endurance Rush", "+12 speed for 4s")
+		passive_triggered.emit("tachyon", "Endurance Rush", "+10 speed for 5s")
 
 	return true
 
