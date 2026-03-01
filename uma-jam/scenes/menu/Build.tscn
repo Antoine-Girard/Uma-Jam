@@ -1,45 +1,10 @@
-[gd_scene format=3 uid="uid://build_scene_001"]
+[gd_scene format=3 uid="uid://cc5qw45v5rxk2"]
 
-[ext_resource type="Script" path="res://scripts/menu/Build.gd" id="1_build"]
-[ext_resource type="Theme" path="res://scenes/menu/build_theme.tres" id="2_theme"]
+[ext_resource type="Script" uid="uid://dy61s7a72qwqn" path="res://scripts/menu/Build.gd" id="1_build"]
+[ext_resource type="Theme" uid="uid://demc2bk4nbky6" path="res://scenes/menu/build_theme.tres" id="2_theme"]
 
 [sub_resource type="StyleBoxFlat" id="bg_style"]
 bg_color = Color(0.07, 0.07, 0.1, 1)
-
-[sub_resource type="StyleBoxFlat" id="slot_style"]
-bg_color = Color(0.08, 0.08, 0.12, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.25, 0.25, 0.35, 0.5)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
-
-[sub_resource type="StyleBoxFlat" id="portrait_style"]
-bg_color = Color(0.09, 0.09, 0.13, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.35, 0.35, 0.5, 0.5)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-
-[sub_resource type="StyleBoxFlat" id="title_accent"]
-bg_color = Color(0.15, 0.18, 0.3, 0.8)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
-content_margin_left = 12.0
-content_margin_top = 6.0
-content_margin_right = 12.0
-content_margin_bottom = 6.0
 
 [sub_resource type="StyleBoxFlat" id="back_normal"]
 bg_color = Color(0.35, 0.12, 0.12, 1)
@@ -65,7 +30,42 @@ corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
-[node name="Build" type="Control"]
+[sub_resource type="StyleBoxFlat" id="title_accent"]
+content_margin_left = 12.0
+content_margin_top = 6.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
+bg_color = Color(0.15, 0.18, 0.3, 0.8)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="portrait_style"]
+bg_color = Color(0.09, 0.09, 0.13, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.35, 0.35, 0.5, 0.5)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="slot_style"]
+bg_color = Color(0.08, 0.08, 0.12, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25, 0.25, 0.35, 0.5)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="Build" type="Control" unique_id=1140778008]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -75,22 +75,25 @@ grow_vertical = 2
 theme = ExtResource("2_theme")
 script = ExtResource("1_build")
 
-[node name="BG" type="Panel" parent="."]
+[node name="BG" type="Panel" parent="." unique_id=1077071570]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_styles/panel = SubResource("bg_style")
 
-[node name="TopBar" type="HBoxContainer" parent="."]
+[node name="TopBar" type="HBoxContainer" parent="." unique_id=1092855060]
 layout_mode = 1
+anchors_preset = 10
 anchor_right = 1.0
 offset_left = 20.0
 offset_top = 14.0
 offset_right = -20.0
 offset_bottom = 68.0
 
-[node name="BackButton" type="Button" parent="TopBar"]
+[node name="BackButton" type="Button" parent="TopBar" unique_id=346497284]
 custom_minimum_size = Vector2(140, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
@@ -98,30 +101,32 @@ theme_override_styles/normal = SubResource("back_normal")
 theme_override_styles/hover = SubResource("back_hover")
 text = "← BACK"
 
-[node name="Title" type="Label" parent="TopBar"]
-size_flags_horizontal = 3
+[node name="Title" type="Label" parent="TopBar" unique_id=1782120891]
 layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.75, 0.82, 1, 1)
 theme_override_font_sizes/font_size = 32
-theme_override_colors/font_color = Color(0.75, 0.82, 1.0, 1)
 text = "BUILD"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="TitleSpacer" type="Control" parent="TopBar"]
+[node name="TitleSpacer" type="Control" parent="TopBar" unique_id=1909689463]
 custom_minimum_size = Vector2(140, 0)
 layout_mode = 2
 
-[node name="HSep" type="HSeparator" parent="."]
+[node name="HSep" type="HSeparator" parent="." unique_id=1648180732]
+modulate = Color(0.4, 0.45, 0.7, 0.5)
 layout_mode = 1
+anchors_preset = 10
 anchor_right = 1.0
 offset_left = 20.0
 offset_top = 72.0
 offset_right = -20.0
 offset_bottom = 74.0
-modulate = Color(0.4, 0.45, 0.7, 0.5)
 
-[node name="MainLayout" type="HBoxContainer" parent="."]
+[node name="MainLayout" type="HBoxContainer" parent="." unique_id=1588493521]
 layout_mode = 1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 20.0
@@ -130,60 +135,60 @@ offset_right = -20.0
 offset_bottom = -20.0
 theme_override_constants/separation = 16
 
-[node name="LeftPanel" type="VBoxContainer" parent="MainLayout"]
+[node name="LeftPanel" type="VBoxContainer" parent="MainLayout" unique_id=1508001704]
 custom_minimum_size = Vector2(230, 0)
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="CharTitlePanel" type="PanelContainer" parent="MainLayout/LeftPanel"]
+[node name="CharTitlePanel" type="PanelContainer" parent="MainLayout/LeftPanel" unique_id=941966645]
 layout_mode = 2
 theme_override_styles/panel = SubResource("title_accent")
 
-[node name="CharTitle" type="Label" parent="MainLayout/LeftPanel/CharTitlePanel"]
+[node name="CharTitle" type="Label" parent="MainLayout/LeftPanel/CharTitlePanel" unique_id=702585413]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.78, 1, 1)
 theme_override_font_sizes/font_size = 18
-theme_override_colors/font_color = Color(0.7, 0.78, 1.0, 1)
 text = "CHARACTER"
 horizontal_alignment = 1
 
-[node name="CharScroll" type="ScrollContainer" parent="MainLayout/LeftPanel"]
+[node name="CharScroll" type="ScrollContainer" parent="MainLayout/LeftPanel" unique_id=800462742]
+layout_mode = 2
 size_flags_vertical = 3
-layout_mode = 2
 
-[node name="CharList" type="GridContainer" parent="MainLayout/LeftPanel/CharScroll"]
-size_flags_horizontal = 3
+[node name="CharList" type="GridContainer" parent="MainLayout/LeftPanel/CharScroll" unique_id=445574887]
 layout_mode = 2
-columns = 2
+size_flags_horizontal = 3
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
+columns = 2
 
-[node name="VSep" type="VSeparator" parent="MainLayout"]
-layout_mode = 2
+[node name="VSep" type="VSeparator" parent="MainLayout" unique_id=350179616]
 modulate = Color(0.4, 0.45, 0.7, 0.3)
+layout_mode = 2
 
-[node name="MiddlePanel" type="VBoxContainer" parent="MainLayout"]
+[node name="MiddlePanel" type="VBoxContainer" parent="MainLayout" unique_id=1751978366]
 custom_minimum_size = Vector2(220, 0)
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="SelectedTitlePanel" type="PanelContainer" parent="MainLayout/MiddlePanel"]
+[node name="SelectedTitlePanel" type="PanelContainer" parent="MainLayout/MiddlePanel" unique_id=14371213]
 layout_mode = 2
 theme_override_styles/panel = SubResource("title_accent")
 
-[node name="SelectedTitle" type="Label" parent="MainLayout/MiddlePanel/SelectedTitlePanel"]
+[node name="SelectedTitle" type="Label" parent="MainLayout/MiddlePanel/SelectedTitlePanel" unique_id=880877245]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.78, 1, 1)
 theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.7, 0.78, 1.0, 1)
 text = "SELECTED"
 horizontal_alignment = 1
 
-[node name="SelectedPortrait" type="Panel" parent="MainLayout/MiddlePanel"]
+[node name="SelectedPortrait" type="Panel" parent="MainLayout/MiddlePanel" unique_id=1389897156]
 custom_minimum_size = Vector2(200, 240)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_styles/panel = SubResource("portrait_style")
 
-[node name="PortraitTexture" type="TextureRect" parent="MainLayout/MiddlePanel/SelectedPortrait"]
+[node name="PortraitTexture" type="TextureRect" parent="MainLayout/MiddlePanel/SelectedPortrait" unique_id=202621823]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -192,176 +197,186 @@ offset_left = 4.0
 offset_top = 4.0
 offset_right = -4.0
 offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="PortraitLabel" type="Label" parent="MainLayout/MiddlePanel/SelectedPortrait"]
+[node name="PortraitLabel" type="Label" parent="MainLayout/MiddlePanel/SelectedPortrait" unique_id=268054388]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_font_sizes/font_size = 13
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_colors/font_color = Color(0.5, 0.5, 0.6, 0.7)
+theme_override_font_sizes/font_size = 13
 text = "— none —"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="SelectedName" type="Label" parent="MainLayout/MiddlePanel"]
+[node name="SelectedName" type="Label" parent="MainLayout/MiddlePanel" unique_id=1681460373]
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-text = ""
+theme_override_font_sizes/font_size = 22
 horizontal_alignment = 1
 
-[node name="SelectedType" type="Label" parent="MainLayout/MiddlePanel"]
+[node name="SelectedType" type="Label" parent="MainLayout/MiddlePanel" unique_id=21561036]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.75, 1, 0.9)
 theme_override_font_sizes/font_size = 14
-theme_override_colors/font_color = Color(0.6, 0.75, 1.0, 0.9)
-text = ""
 horizontal_alignment = 1
 
-[node name="SelectedSkill" type="Label" parent="MainLayout/MiddlePanel"]
+[node name="SelectedSkill" type="Label" parent="MainLayout/MiddlePanel" unique_id=854730589]
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
 theme_override_colors/font_color = Color(0.7, 0.7, 0.75, 0.85)
-text = ""
+theme_override_font_sizes/font_size = 12
 horizontal_alignment = 1
-vertical_alignment = 0
 autowrap_mode = 2
 
-[node name="VSep2" type="VSeparator" parent="MainLayout"]
-layout_mode = 2
+[node name="VSep2" type="VSeparator" parent="MainLayout" unique_id=898478776]
 modulate = Color(0.4, 0.45, 0.7, 0.3)
-
-[node name="RightPanel" type="VBoxContainer" parent="MainLayout"]
-size_flags_horizontal = 3
 layout_mode = 2
+
+[node name="RightPanel" type="VBoxContainer" parent="MainLayout" unique_id=817245670]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/separation = 10
 
-[node name="DeckTitlePanel" type="PanelContainer" parent="MainLayout/RightPanel"]
+[node name="DeckTitlePanel" type="PanelContainer" parent="MainLayout/RightPanel" unique_id=1768981027]
 layout_mode = 2
 theme_override_styles/panel = SubResource("title_accent")
 
-[node name="DeckTitle" type="Label" parent="MainLayout/RightPanel/DeckTitlePanel"]
+[node name="DeckTitle" type="Label" parent="MainLayout/RightPanel/DeckTitlePanel" unique_id=1979549433]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.78, 1, 1)
 theme_override_font_sizes/font_size = 18
-theme_override_colors/font_color = Color(0.7, 0.78, 1.0, 1)
 text = "MY DECK  (0 / 5)"
 horizontal_alignment = 1
 
-[node name="DeckSlots" type="HBoxContainer" parent="MainLayout/RightPanel"]
+[node name="DeckSlots" type="HBoxContainer" parent="MainLayout/RightPanel" unique_id=2061014459]
 custom_minimum_size = Vector2(0, 120)
 layout_mode = 2
-alignment = 1
 theme_override_constants/separation = 12
+alignment = 1
 
-[node name="Slot1" type="Panel" parent="MainLayout/RightPanel/DeckSlots"]
+[node name="Slot1" type="Panel" parent="MainLayout/RightPanel/DeckSlots" unique_id=821609904]
 custom_minimum_size = Vector2(90, 120)
 layout_mode = 2
 theme_override_styles/panel = SubResource("slot_style")
 
-[node name="SlotLabel" type="Label" parent="MainLayout/RightPanel/DeckSlots/Slot1"]
+[node name="SlotLabel" type="Label" parent="MainLayout/RightPanel/DeckSlots/Slot1" unique_id=2102164545]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_font_sizes/font_size = 11
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_colors/font_color = Color(0.4, 0.4, 0.5, 0.6)
+theme_override_font_sizes/font_size = 11
 text = "EMPTY"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 
-[node name="Slot2" type="Panel" parent="MainLayout/RightPanel/DeckSlots"]
+[node name="Slot2" type="Panel" parent="MainLayout/RightPanel/DeckSlots" unique_id=1400248368]
 custom_minimum_size = Vector2(90, 120)
 layout_mode = 2
 theme_override_styles/panel = SubResource("slot_style")
 
-[node name="SlotLabel" type="Label" parent="MainLayout/RightPanel/DeckSlots/Slot2"]
+[node name="SlotLabel" type="Label" parent="MainLayout/RightPanel/DeckSlots/Slot2" unique_id=681596212]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_font_sizes/font_size = 11
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_colors/font_color = Color(0.4, 0.4, 0.5, 0.6)
+theme_override_font_sizes/font_size = 11
 text = "EMPTY"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 
-[node name="Slot3" type="Panel" parent="MainLayout/RightPanel/DeckSlots"]
+[node name="Slot3" type="Panel" parent="MainLayout/RightPanel/DeckSlots" unique_id=826159839]
 custom_minimum_size = Vector2(90, 120)
 layout_mode = 2
 theme_override_styles/panel = SubResource("slot_style")
 
-[node name="SlotLabel" type="Label" parent="MainLayout/RightPanel/DeckSlots/Slot3"]
+[node name="SlotLabel" type="Label" parent="MainLayout/RightPanel/DeckSlots/Slot3" unique_id=589709864]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_font_sizes/font_size = 11
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_colors/font_color = Color(0.4, 0.4, 0.5, 0.6)
+theme_override_font_sizes/font_size = 11
 text = "EMPTY"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 
-[node name="Slot4" type="Panel" parent="MainLayout/RightPanel/DeckSlots"]
+[node name="Slot4" type="Panel" parent="MainLayout/RightPanel/DeckSlots" unique_id=1403918597]
 custom_minimum_size = Vector2(90, 120)
 layout_mode = 2
 theme_override_styles/panel = SubResource("slot_style")
 
-[node name="SlotLabel" type="Label" parent="MainLayout/RightPanel/DeckSlots/Slot4"]
+[node name="SlotLabel" type="Label" parent="MainLayout/RightPanel/DeckSlots/Slot4" unique_id=1278661047]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_font_sizes/font_size = 11
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_colors/font_color = Color(0.4, 0.4, 0.5, 0.6)
+theme_override_font_sizes/font_size = 11
 text = "EMPTY"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 
-[node name="Slot5" type="Panel" parent="MainLayout/RightPanel/DeckSlots"]
+[node name="Slot5" type="Panel" parent="MainLayout/RightPanel/DeckSlots" unique_id=1085027310]
 custom_minimum_size = Vector2(90, 120)
 layout_mode = 2
 theme_override_styles/panel = SubResource("slot_style")
 
-[node name="SlotLabel" type="Label" parent="MainLayout/RightPanel/DeckSlots/Slot5"]
+[node name="SlotLabel" type="Label" parent="MainLayout/RightPanel/DeckSlots/Slot5" unique_id=248190747]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_font_sizes/font_size = 11
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_colors/font_color = Color(0.4, 0.4, 0.5, 0.6)
+theme_override_font_sizes/font_size = 11
 text = "EMPTY"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 
-[node name="CardListSep" type="HSeparator" parent="MainLayout/RightPanel"]
-layout_mode = 2
+[node name="CardListSep" type="HSeparator" parent="MainLayout/RightPanel" unique_id=993860301]
 modulate = Color(0.4, 0.45, 0.7, 0.4)
+layout_mode = 2
 
-[node name="CardTitlePanel" type="PanelContainer" parent="MainLayout/RightPanel"]
+[node name="CardTitlePanel" type="PanelContainer" parent="MainLayout/RightPanel" unique_id=1481708673]
 layout_mode = 2
 theme_override_styles/panel = SubResource("title_accent")
 
-[node name="CardListTitle" type="Label" parent="MainLayout/RightPanel/CardTitlePanel"]
+[node name="CardListTitle" type="Label" parent="MainLayout/RightPanel/CardTitlePanel" unique_id=699801485]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.78, 1, 1)
 theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.7, 0.78, 1.0, 1)
 text = "AVAILABLE CARDS"
 horizontal_alignment = 1
 
-[node name="CardScroll" type="ScrollContainer" parent="MainLayout/RightPanel"]
+[node name="CardScroll" type="ScrollContainer" parent="MainLayout/RightPanel" unique_id=1485857825]
+layout_mode = 2
 size_flags_vertical = 3
-layout_mode = 2
 
-[node name="CardGrid" type="GridContainer" parent="MainLayout/RightPanel/CardScroll"]
-size_flags_horizontal = 3
+[node name="CardGrid" type="GridContainer" parent="MainLayout/RightPanel/CardScroll" unique_id=543705287]
 layout_mode = 2
-columns = 3
+size_flags_horizontal = 3
 theme_override_constants/h_separation = 12
 theme_override_constants/v_separation = 12
+columns = 3

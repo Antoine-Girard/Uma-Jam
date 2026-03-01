@@ -21,7 +21,7 @@ const CARDS = [
 	{ "id": "acceleration_t1",     "name": "Starting Accel",    "category": "Condition", "img": "tex_support_card_30076", "desc": "Acceleration from race start (+2, 5s, -2) — T1 only" },
 	{ "id": "leader_t3",           "name": "Leader's T3 Surge", "category": "Condition", "img": "tex_support_card_30265", "desc": "Gains speed and accel if 1st at T3 (+4, +3, 10s, -2 endurance)" },
 	{ "id": "last_place_t3",       "name": "Comeback Sprint",   "category": "Condition", "img": "tex_support_card_30256", "desc": "Gains speed and accel if last at T3 (+5, +4, 10s, -2 endurance)" },
-	{ "id": "drafting_speed",      "name": "Drafting Burst",    "category": "Condition", "img": "tex_support_card_30057", "desc": "Gains speed when behind another horse (+3, 4s, -1 endurance)" },
+	{ "id": "drafting_speed",      "name": "Drafting Burst",    "category": "Condition", "img": "tex_support_card_30057", "desc": "Gains speed when close behind a horse in same lane (+3, 4s, -1 endurance)" },
 ]
 
 var selected_character: Dictionary = {}
