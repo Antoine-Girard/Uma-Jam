@@ -309,28 +309,9 @@ func _passive_rudolf(delta: float) -> void:
 		_passive_state["rudolf_cooldown"] = _RUDOLF_INTERVAL * 0.5
 		return
 
-<<<<<<< HEAD
 	_apply_buff({
 		"id":             "passive_rudolf_pressure",
 		"speed_bonus":    2.0,
-=======
-<<<<<<< Updated upstream
-	var target_sm: SkillManager = null
-	for child in target.get_children():
-		if child is SkillManager:
-			target_sm = child
-			break
-
-	if target_sm != null:
-		target_sm.apply_debuff("rudolf_debuff", 5.0, _RUDOLF_INTERVAL)
-		debuff_applied.emit(target, 2.0, _RUDOLF_INTERVAL)
-		passive_triggered.emit("rudolf", "Pressure from Behind",
-			"Debuff %s: -2 speed for %.0fs" % [target.horse_name, _RUDOLF_INTERVAL])
-=======
-	_apply_buff({
-		"id":             "passive_rudolf_pressure",
-		"speed_bonus":    7.0,
->>>>>>> origin/Menu
 		"accel_bonus":    0.0,
 		"recovery_bonus": 0.0,
 		"duration":       _RUDOLF_INTERVAL,
@@ -339,10 +320,6 @@ func _passive_rudolf(delta: float) -> void:
 	})
 	passive_triggered.emit("rudolf", "Pressure from Behind",
 		"Speed +2 for %.0fs (horse ahead in lane)" % _RUDOLF_INTERVAL)
-<<<<<<< HEAD
-=======
->>>>>>> Stashed changes
->>>>>>> origin/Menu
 
 	_passive_state["rudolf_cooldown"] = _RUDOLF_INTERVAL
 
